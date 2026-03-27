@@ -1,0 +1,21 @@
+# Visual Design and UX Guidelines
+
+This document serves as the single source of truth for the visual identity and user experience.
+
+## Visual Identity
+
+*   **Typography**: [Primary font, e.g., Inter]
+*   **Color Palette**: [Description of CSS variables and theme]
+*   **Aesthetics**: [List key styles, e.g., Glassmorphism, Material Design]
+
+## Visual Effects
+
+[Detail specific CSS and visual effects used across the application.]
+
+## Frontend Components
+
+*   **[Component Name]**: [Purpose and responsive behavior]
+
+## Development CLI UX
+
+[Detail console visual feedback, e.g., progress bars, rich console output.]

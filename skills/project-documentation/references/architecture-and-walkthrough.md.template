@@ -1,0 +1,35 @@
+# Architecture and Walkthrough
+
+## Design Decisions (ADRs)
+
+| Decision | Rationale |
+| :--- | :--- |
+| [Decision] | [Why was this chosen? Trade-offs?] |
+
+## Solution Architecture Overview
+
+[Describe how the application hangs together and is wired up. Cover frontend, backend, API, database and persistence, agents, frameworks.]
+
+## Deployment Architecture Overview
+
+[Describe the infrastructure services that the application is deployed to. Deployment details should be captured in DEPLOYMENT.md.]
+
+## Configuration Management
+
+## Presentation Layer
+
+## Backend
+
+## Security
+
+## Data Layer
+
+[Data overview, types of persistence, any caching, etc]
+
+### Collections / Tables (as appropriate)
+
+*   **[Collection Name]**: [Schema and Document ID format]
+
+## User Journeys
+
+[Summarise the key user journeys and provide a walkthrough for each.]

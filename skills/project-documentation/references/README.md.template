@@ -1,0 +1,67 @@
+# [Project Name]
+
+[Short, compelling description of the project's purpose and what it builds/achieves.]
+
+## Repo Metadata
+
+- Author: [Author]
+- Repository: [URL]
+
+## Table of Contents
+
+[Include links to internal page headings.]
+
+## Key Links
+
+[Bullet list of links to key material, API references, related blogs, etc]
+
+## Project Structure
+
+[This is a sample representation. Check the actual repository to determine the structure. Shows directories first.]
+
+```text
+[Project Root]/
+├── deployment/                # Infrastructure and deployment scripts
+│   ├── terraform/             # Terraform configuration
+│   └── README.md              # Deployment documentation
+├── docs/                      # Documentation
+├── app/                       # Backend code
+├── frontend/                  # Frontend code
+├── tests/                     # Unit, integration, and load tests
+│   ├── unit/                  # Unit tests
+│   └── integration/           # Integration tests
+├── .env.template              # .env template file
+├── pyproject.toml             # Project Python dependencies and configuration
+├── README.md                  # This file
+└── TODO.md                    # TODO list
+```
+
+## Quick Start: Local Development
+
+[Provide details on how to setup and run locally. 
+If deployment instructions are in deployment.md, then simply reference it, as required.
+This section should include:
+- any APIs that must be enabled (e.g. for a project using Google Cloud)
+- any APIs keys required
+- any environment configuration
+- any roles that are needed
+- any service accounts that are required
+]
+
+
+## Useful Commands
+
+| Command | Description |
+| :--- | :--- |
+| `make install` | Install all dependencies |
+| `make local-backend` | Run FastAPI dev server |
+| `make react-ui` | Run React Vite dev server |
+| `make test` | Run all tests |
+| `make lint` | Run all quality checks |
+
+## Documentation
+
+- [Visual Design & UX](docs/DESIGN.md)
+- [Architecture & Walkthrough](docs/architecture-and-walkthrough.md)
+- [Testing & QA](docs/testing.md)
+- [Deployment & Infrastructure](deployment/README.md)

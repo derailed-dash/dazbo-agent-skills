@@ -1,0 +1,21 @@
+# Testing & Quality Assurance
+
+## Tooling
+
+*   **Test Runners**: [e.g., pytest for Python, Vitest and React Testing Library for frontend]
+*   **Linting/Formatting**: [e.g., ruff, codespell]
+
+## CI/CD vs Local
+
+[Describe environment variable differences and mocking strategies.]
+
+## Commands
+
+*   `make test`: Run all tests
+*   `make lint`: Run all quality checks
+
+## Test Categories
+
+*   **Unit Tests**: [Description]
+*   **Integration Tests**: [Description]
+*   **Manual Verification**: [Detail scripts or curl commands for manual QA]

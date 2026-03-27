@@ -1,0 +1,18 @@
+# Ignore directories
+/history/
+/tmp/
+extensions/
+.playwright-cli/
+.pytest_cache
+
+# Ignore files
+google_accounts.json
+google_account_id
+installation_id
+oauth_creds.json
+state.json
+*.pb
+projects.json
+trustedFolders.json
+gemini-credentials.json
+*.env

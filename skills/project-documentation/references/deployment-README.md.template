@@ -1,0 +1,29 @@
+# Deployment & Infrastructure
+
+## Deployment Overview
+
+[Describe the options for deployment.]
+
+## Application Packaging
+
+[Describe any appproach to packaging and container image creation.]
+
+## Prerequisites
+
+- [List tools and authentication steps]
+
+## By Script (if appropriate)
+
+[Capture the commands to deploy.]
+
+## IaC and Terraform
+
+[Describe approach to IaC/Terraform, if appropriate.]
+
+### Variable Propagation
+
+[Describe how configuration flows from .tfvars to runtime environment variables.]
+
+## CI/CD
+
+[Describe how deployment is achieved with CI/CD, if appropriate. E.g. covering GitHub, Cloud Build, etc.]
