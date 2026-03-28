@@ -3,7 +3,7 @@ name: project-documentation
 description: Creates, maintains, and synchronizes core project documentation (README, TODO, DESIGN, Architecture, Testing, Deployment). Use when the user needs to write, update, or structure project documentation based on codebase changes.
 ---
 
-# Documentation Maintenance Skill
+# Project Documentation Skill
 
 This skill provides a comprehensive framework for the creation and maintenance of high-quality, professional technical documentation for any software project or repository.
 
@@ -15,6 +15,10 @@ This skill should be triggered whenever:
 - The user adds / changes / deletes functionality, or makes significant changes to the codebase.
 - The user makes any changes to testing.
 - The user makes any changes to deployment.
+
+## Mandatory Initialization
+
+Before performing ANY documentation task, you MUST check for the presence of the `technical-writer` skill, by following the guidance in the `Technical Writer Skill Synergy` section below.
 
 ## Core Principles
 
@@ -30,7 +34,7 @@ This skill should be triggered whenever:
 
 ## Technical Writer Skill Synergy
 
-If you are performing any documentation tasks (e.g. creation or updates to README, TODO, DESIGN, Architecture, Testing, Deployment) and the `technical-writer` skill is not available in your current skills toolset:
+The `technical-writer` skill improves the quality of your documentation review and creation. If you are performing any documentation tasks (e.g. creation or updates to README, TODO, DESIGN, Architecture, Testing, Deployment) and the `technical-writer` skill is not available in your current skills toolset:
 
 1.  **Check for existence**: Use `npx skills list` (project scope) and `npx skills ls -g` (global scope) to verify if it is missing.
 2.  **Recommend**: If not yet installed, inform the user that the `technical-writer` skill provides advanced formatting and style guidance. Offer to install it.
