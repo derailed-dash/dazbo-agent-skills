@@ -16,15 +16,6 @@ This skill should be triggered whenever:
 - The user makes any changes to testing.
 - The user makes any changes to deployment.
 
-## Skill Synergy
-
-If you are performing high-level documentation tasks (e.g. README creation, architecture walkthroughs, or style guide development) and the `technical-writer` skill is not available in your current toolset:
-
-1.  **Check for existence**: Use `npx skills list` (project scope) and `npx skills ls -g` (global scope) to verify if it is missing.
-2.  **Recommend & Install**: Inform the user that the `technical-writer` skill provides advanced formatting and style guidance. Offer to install it globally using:
-    `npx skills add https://github.com/shubhamsaboo/awesome-llm-apps --skill technical-writer -g -y`
-3.  **Collaborate**: Once installed, use its principles for clarity, scannability, and audience-focused writing.
-
 ## Core Principles
 
 1.  **Persona & Style**: Maintain a tone that is professional ("Expert Architect"), technical but welcoming. Use a high-level architectural perspective when explaining the "Why" behind design decisions.
@@ -35,9 +26,21 @@ If you are performing high-level documentation tasks (e.g. README creation, arch
 6.  **Ask About Unknowns**:
     - Ask questions to help establish design choices and technology selection.
     - Ask questions to help establish the rationale for any design decisions that are missing rationale.
-7.  **Technical Writer Synergy**: When performing documentation maintenance, you MUST make use of the `technical-writer` skill IF (and only IF) the `technical-writer` skill is present. If it is not found, follow the **Skill Synergy** section above.
+7.  **Technical Writer Synergy**: When performing documentation maintenance, you MUST make use of the `technical-writer` skill IF (and only IF) the `technical-writer` skill is present. If it is not found, follow the **Technical Writer Skill Synergy** section below.
+
+## Technical Writer Skill Synergy
+
+If you are performing any documentation tasks (e.g. creation or updates to README, TODO, DESIGN, Architecture, Testing, Deployment) and the `technical-writer` skill is not available in your current skills toolset:
+
+1.  **Check for existence**: Use `npx skills list` (project scope) and `npx skills ls -g` (global scope) to verify if it is missing.
+2.  **Recommend**: If not yet installed, inform the user that the `technical-writer` skill provides advanced formatting and style guidance. Offer to install it.
+3.  **Install**: If the user agrees, install the skill for them using this command:
+    `npx skills add https://github.com/shubhamsaboo/awesome-llm-apps --skill technical-writer -g -y`
+4.  **Collaborate**: Once installed, load this skill and leverage it for documentation tasks.
 
 ## Document Maintenance Guide
+
+These are the core documents that should be maintained by this skill:
 
 ### 1. `README.md` (The "Storefront")
 
@@ -124,7 +127,7 @@ If you are performing high-level documentation tasks (e.g. README creation, arch
 ## Continuous Update Workflow
 
 > [!IMPORTANT]
-> Whenever you perform a significant code change or feature addition, you MUST:
+> Whenever you perform a significant code change or feature addition, or you are asked to update any documentation, you MUST:
 > 1.  Identify which of the core documents are impacted.
 > 2.  Assess if the change introduces a new "Design Decision" (ADR) that should be recorded in `docs/architecture-and-walkthrough.md`.
 > 3.  Ensure all command snippets in `README.md` or `testing.md` match the updated code behavior.
