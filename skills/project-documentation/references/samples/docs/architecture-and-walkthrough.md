@@ -14,7 +14,6 @@
     - [Component Architecture](#component-architecture)
     - [Runtime & Deployment Architecture](#runtime--deployment-architecture)
 - [Resource Ingestion Architecture](#resource-ingestion-architecture)
-- [Future Enhancements](#future-enhancements-rag--vector-search)
 
 This document serves as the technical reference for the **Dazbo Portfolio** application. It outlines the key architectural decisions, the solution design, and the operational workflows for managing content. It is intended for developers and maintainers seeking to understand the system's inner workings, from the React-FastAPI runtime to the data ingestion pipelines.
 
@@ -456,10 +455,6 @@ To ensure the agent prioritises the most relevant or high-quality content, the `
 ### Workflow Handover
 
 When a user asks a general question (e.g., "What Python blogs do you have?"), the agent uses `search_portfolio` to find relevant matches and their unique IDs. If the user then requests details on a specific item, the agent hands over the ID to the MCP `get_document` tool to fetch the full Markdown body directly from Firestore.
-
-## Future Enhancements: RAG & Vector Search
-
-To improve the chatbot's ability to answer specific questions about the portfolio content, we plan to implement Retrieval-Augmented Generation (RAG) using Vector Search.
 
 ### Architecture
 
