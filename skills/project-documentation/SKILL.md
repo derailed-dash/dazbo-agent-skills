@@ -24,6 +24,7 @@ This skill provides a comprehensive framework for the maintenance of high-qualit
 
 *   **Focus**: Rapid onboarding and high-level project purpose.
 *   **Template**: [README.md.template](references/README.md.template)
+*   **Sample**: [README.md](references/samples/README.md)
 *   **Key Sections**: Overview, Key Links (Blogs/Live Demo), Project Structure (folder tree), Setup (One-time vs Per-session), Useful Commands (use Markdown tables).
 *   **Maintenance Trigger**: Adding a new top-level directory, adding a core feature, adding a make target, or changing the local development setup workflow.
 
@@ -38,7 +39,8 @@ This skill provides a comprehensive framework for the maintenance of high-qualit
 
 *   **Focus**: Visual identity, UX components, and design tokens.
 *   **Template**: [design.md.template](references/design.md.template)
-*   **Key Sections**: Visual Identity (Typography, Colors), Visual Effects (Glassmorphism), Frontend Components (Layout, Carousel, Widget), CLI UX (Rich library progress/reporting).
+*   **Sample**: [docs/DESIGN.md](references/samples/docs/DESIGN.md)
+*   **Key Sections**: Visual Identity (Typography, Colours), Visual Effects (Glassmorphism), Frontend Components (Layout, Carousel, Widget), CLI UX (Rich library progress/reporting).
 *   **Maintenance Trigger**: Modifying `index.css` global styles, creating new React UI components, or adding visual console output to scripts.
 
 ### 4. `docs/architecture-and-walkthrough.md` (The "Blueprint")
@@ -70,7 +72,8 @@ This skill provides a comprehensive framework for the maintenance of high-qualit
 *   **Focus**: Product logic, product branding, guidelines, and tech stack details.
 *   **Key Files**: `product.md`, `product-guidelines.md`, `tech-stack.md`.
 *   **Maintenance Condition**: ONLY maintain these if they already exist in the codebase.
-*   **Maintenance Trigger**: Major tech stack shifts or product logic re-definition.
+*   **Maintenance Trigger**: Major tech stack shifts, product branding changes, or product logic re-definition.
+*   **Review Trigger**: Request to audit product alignment or tech stack compliance.
 
 ## Continuous Update Workflow
 

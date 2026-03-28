@@ -11,6 +11,22 @@
 
 [Include links to internal page headings.]
 
+## Key Project Documentation
+
+[Provide a table with links to key documentation within the project]
+
+Example:
+
+| Document | Description |
+| --- | --- |
+| [README.md](README.md) | This file - the developer front door |
+| [TODO.md](TODO.md) | TODO list / feature backlog |
+| [docs/architecture-and-walkthrough.md](docs/architecture-and-walkthrough.md) | Architecture and walkthrough, including design decisions and data models |
+| [docs/DESIGN.md](docs/DESIGN.md) | UI design, visual identity, and frontend UI components |
+| [docs/testing.md](docs/testing.md) | Testing docs, including descriptions of all tests |
+| [deployment/README.md](deployment/README.md) | Deployment guidance, including Terraform, and CI/CD |
+| [GEMINI.md](GEMINI.md) | Guidance for Gemini or other LLMs |
+
 ## Key Links
 
 [Bullet list of links to key material, API references, related blogs, etc]
@@ -18,6 +34,8 @@
 ## Project Structure
 
 [This is a sample representation. Check the actual repository to determine the structure. Shows directories first.]
+
+Example:
 
 ```text
 [Project Root]/
@@ -36,7 +54,12 @@
 └── TODO.md                    # TODO list
 ```
 
-## Quick Start: Local Development
+## Architecture and Tech Stack - at a Glance
+
+[Brief summary of the key technologies used and the overall architecture. 
+Point to the `architecture-and-walkthrough.md` for further details.]
+
+## Quick Start: Working With This Repo
 
 [Provide details on how to setup and run locally. 
 If deployment instructions are in deployment.md, then simply reference it, as required.
@@ -48,20 +71,21 @@ This section should include:
 - any service accounts that are required
 ]
 
+Optional sub-sections include:
+
+### Prerequisites
+
+[A list of tools required to work with this repo, e.g. `uv`, `gcloud`, `terraform`]
+
+### One-Time Setup
+
+[E.g. project creation, API enablement]
+
+### Per Dev Session
+
+[E.g. running any scripts to setup dev environment; loading of any env vars]
 
 ## Useful Commands
 
-| Command | Description |
-| :--- | :--- |
-| `make install` | Install all dependencies |
-| `make local-backend` | Run FastAPI dev server |
-| `make react-ui` | Run React Vite dev server |
-| `make test` | Run all tests |
-| `make lint` | Run all quality checks |
+[In a table, list useful commands, scripts and tools. E.g. any make commands or setup bash scripts.]
 
-## Documentation
-
-- [Visual Design & UX](docs/DESIGN.md)
-- [Architecture & Walkthrough](docs/architecture-and-walkthrough.md)
-- [Testing & QA](docs/testing.md)
-- [Deployment & Infrastructure](deployment/README.md)
