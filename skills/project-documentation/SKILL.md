@@ -1,6 +1,6 @@
 ---
 name: project-documentation
-description: Creates, maintains, and synchronizes core project documentation (README, TODO, DESIGN, Architecture, Testing, Deployment). Use when the user needs to write, update, or structure project documentation based on codebase changes.
+description: Creates, maintains, and synchronizes core project documentation (README, TODO, DESIGN, Architecture, Testing, Deployment). Use when the user needs to write, update, or structure project documentation based on codebase changes, or whenever the user asks to perform any documentation tasks or documentation review.
 ---
 
 # Project Documentation Skill
@@ -44,7 +44,7 @@ The `technical-writer` skill improves the quality of your documentation review a
 
 ## Document Maintenance Guide
 
-These are the core documents that should be maintained by this skill:
+Here are the core documents that should be maintained by this skill. You MUST review EACH of these core documents and update them as needed.
 
 ### 1. `README.md` (The "Storefront")
 
@@ -52,7 +52,7 @@ These are the core documents that should be maintained by this skill:
 *   **Template**: [README.md.template](references/README.md.template)
 *   **Sample**: [README.md](references/samples/README.md)
 *   **Key Sections**: Overview, Key Links (Blogs/Live Demo), Project Structure (folder tree), Setup (One-time vs Per-session), Useful Commands (use Markdown tables).
-*   **Triggers**: 
+*   **Triggers** include, but are not limited to: 
     - Adding a new top-level directory.
     - Adding a core feature.
     - Adding a `make` target.
@@ -62,29 +62,30 @@ These are the core documents that should be maintained by this skill:
 
 *   **Focus**: Overall project roadmap and task tracking.
 *   **Template**: [TODO.md.template](references/TODO.md.template)
-*   **Triggers**: 
+*   **Maintenance Condition**: Only maintain if this file already exists. You may offer to create it, for example, if tasks have been achieved and/or future tasks are being discussed.
+*   **Triggers** include, but are not limited to: 
     - Completing a step or updating the project timeline.
     - If asked to create a new TODO entry.
     - Offer to mark steps as closed when done.
 
 ### 3. `docs/DESIGN.md` (Visual & UX)
 
-*   **Focus**: Visual identity, UX components, and design tokens.
+*   **Focus**: Visual identity, UX components, and design tokens. Can be used by UI design integrations, e.g. Google Stitch.
 *   **Template**: [design.md.template](references/design.md.template)
 *   **Sample**: [docs/DESIGN.md](references/samples/docs/DESIGN.md)
 *   **Key Sections**: Visual Identity (Typography, Colours), Visual Effects (e.g. Glassmorphism), Frontend Components (Layout, Carousel, Widget, etc), CLI UX (if present).
-*   **Triggers**: 
+*   **Triggers** include, but are not limited to: 
     - When implementing a UI framework (e.g. React, Vue, Angular, Svelte, etc).
     - When adding or changing any UI components.
     - Modifying visuals or style, e.g. modifying `index.css` global styles.
 
 ### 4. `docs/architecture-and-walkthrough.md` (The "Blueprint")
 
-*   **Focus**: System-wide architectural logic and design decisions.
+*   **Focus**: System-wide architectural logic and design decisions. Assess if any change introduces a new "Design Decision" (ADR) that should be recorded in `docs/architecture-and-walkthrough.md`.
 *   **Template**: [architecture-and-walkthrough.md.template](references/architecture-and-walkthrough.md.template)
 *   **Sample**: [docs/architecture-and-walkthrough.md](references/samples/docs/architecture-and-walkthrough.md)
 *   **Key Sections**: Design Decisions (ADRs in table format with Rationale), Solution Architecture, Service/Model relationships, Key User Journeys / Walkthroughs
-*   **Triggers**: 
+*   **Triggers** include, but are not limited to: 
     - Adding or changing a design decision.
     - Changing a database schema.
     - Modifying agent orchestration logic.
@@ -99,7 +100,7 @@ These are the core documents that should be maintained by this skill:
 *   **Template**: [testing.md.template](references/testing.md.template)
 *   **Sample**: [docs/testing.md](references/samples/docs/testing.md)
 *   **Key Sections**: Scope (e.g. Python, frontend, agents), tooling (pytest, ruff, etc.), CI/CD environment specifics (Local vs `CI=true`), Unit/Integration/E2E test descriptions, Manual verification steps (e.g., `curl` scripts for rate limiting).
-*   **Triggers**: 
+*   **Triggers** include, but are not limited to: 
     - Adding / changing / removing tests.
     - Changing mock strategies.
     - Introducing new quality gating tools.
@@ -110,19 +111,22 @@ These are the core documents that should be maintained by this skill:
 *   **Template**: [deployment-README.md.template](references/deployment-README.md.template)
 *   **Sample**: [deployment/README.md](references/samples/deployment/README.md)
 *   **Key Sections**: Deployment approach (e.g. scripts, Terraform, or both), Terraform structure, Prerequisites, Variable propagation (env.tfvars -> substitutions -> runtime), Secrets management, CI/CD pipelines.
-*   **Triggers**: 
+*   **Maintenance Condition**: All projects should have some sort of deployment documentation. If it does not exist, you should offer to create it. Update this documentation whenever you make changes to the deployment process.
+*   **Triggers** include, but are not limited to: 
     - Adding a new Terraform resource.
-    - Changing IAM roles.
+    - Enabling APIs.
     - Changing a deployment script.
     - Adding a new service.
-    - Updating the CI/CD pipeline logic.
+    - Changing or binding IAM roles.
+    - Updating install pre-reqs.
+    - Updating the CI/CD pipeline logic, updating GitHub Actions, updating Cloud Build, etc.
 
 ### 7. `conductor/` Documents (Implementation Details)
 
-*   **Focus**: Product logic, product branding, guidelines, and tech stack details.
+*   **Focus**: Product logic, product branding, guidelines, and tech stack details. These documents are automatically managed by the Gemini Conductor Extension, but if changes are done outside of Conductor, these documents should be updated to reflect the changes.
 *   **Key Files**: `product.md`, `product-guidelines.md`, `tech-stack.md`.
-*   **Maintenance Condition**: ONLY maintain these if they already exist in the codebase.
-*   **Triggers**: 
+*   **Maintenance Condition**: ONLY maintain these documents if they already exist in the codebase.
+*   **Triggers** include, but are not limited to:
     - Major tech stack shifts.
     - Product branding changes.
     - Product logic re-definition.
@@ -131,12 +135,13 @@ These are the core documents that should be maintained by this skill:
 ## Continuous Update Workflow
 
 > [!IMPORTANT]
-> Whenever you perform a significant code change or feature addition, or you are asked to update any documentation, you MUST:
-> 1.  Identify which of the core documents are impacted.
-> 2.  Assess if the change introduces a new "Design Decision" (ADR) that should be recorded in `docs/architecture-and-walkthrough.md`.
-> 3.  Ensure all command snippets in `README.md` or `testing.md` match the updated code behavior.
-> 4.  **Always use the provided templates** in the `references/` directory when creating new documentation files.
-> 5.  **Use the samples** in the `references/samples/` directory as a guide for the style and structure of the documentation files.
+> Whenever you perform a code change or feature addition, or you are asked to review / update any documentation, you MUST:
+> 1.  **Review ALL of the core document types** and assess which ones should be created / updated, using the guidance for each document type provided above.
+> 2.  Then, **create or update** as required.
+> 3.  For documents you believe **do not require updating**, explicitly state this in your response.
+> 4.  Ensure all command snippets in `README.md` or `testing.md` match the updated code behavior.
+> 5.  **Always use the provided templates** in the `references/` directory when creating new documentation files.
+> 6.  **Use the samples** in the `references/samples/` directory as a guide for the style and structure of the documentation files.
 
 ## Formatting Best Practices
 
