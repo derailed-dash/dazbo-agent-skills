@@ -137,7 +137,7 @@ Here are the core documents that should be maintained by this skill. You MUST re
 ### 7. `conductor/` Documents (Implementation Details)
 
 *   **Focus**: Product logic, product branding, guidelines, and tech stack details. These documents are automatically managed by the Gemini Conductor Extension, but if changes are done outside of Conductor, these documents should be updated to reflect the changes.
-*   **Key Files**: `product.md`, `product-guidelines.md`, `tech-stack.md`.
+*   **Files in Scope**: `product.md`, `product-guidelines.md`, `tech-stack.md`. (Any other Conductor files are Google Conductor internal only and should not be maintained by this skill.)
 *   **Maintenance Condition**: ONLY maintain these documents if they already exist in the codebase.
 *   **Triggers** include, but are not limited to:
     - Major tech stack shifts.
@@ -163,13 +163,14 @@ Documentation Update Progress:
 - [ ] Step 3: For all identified core documents, draft updates as per Document Maintenance Guide, and using the appropriate templates in the `./references` directory and using the samples in  `./references/samples/`.
 - [ ] Step 4: Review against the formatting rules in the [Formatting Rules](#formatting-rules) section.
 - [ ] Step 5: Check that the identified core documents have been updated. If any changes have been missed or performed incorrectly, go back to Step 2 and repeat.
-- [ ] Step 6: Only finalize and save when all requirements are met.
-- [ ] Step 7: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
+- [ ] Step 6: Check that the change aligns to the formatting rules. If not, fix them and go back to Step 5.
+- [ ] Step 7: Only finalize and save when all requirements are met.
+- [ ] Step 8: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
 ~~~  
 
 ### Summary Table Format
 
-When performing Step 7 of the Documentation Review Process, use the following table structure to summarize your work:
+When performing Step 8 of the Documentation Review Process, use the following table structure to summarise your work:
 
 | Document | Status | Change Summary / Rationale |
 | :--- | :--- | :--- |
