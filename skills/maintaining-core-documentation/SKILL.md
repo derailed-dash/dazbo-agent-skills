@@ -147,9 +147,10 @@ Here are the core documents that should be maintained by this skill. You MUST re
 
 ## Formatting Rules
 
-*   Always use tables for configurations, model fields, and design decisions to improve readability.
-*   There MUST be a blank line after every markdown header.
-*   All code MUST be wrapped in fenced code blocks with appropriate language identifiers.
+- **Headings**: There MUST be a blank line after every markdown header (e.g., `# Header\n\nContent`). This ensures consistent rendering across all Markdown viewers.
+- **Tables**: Always use tables for configurations, model fields, and design decisions to improve readability.
+- **Spacing**: There MUST be a blank line after every markdown header.
+- **Code blocks**: All code MUST be wrapped in fenced code blocks with appropriate language identifiers.
 
 ## Documentation Review Process
 
@@ -160,13 +161,14 @@ Documentation Update Progress:
 
 - [ ] Step 1: Identify which of the core documents are impacted by code changes.
 - [ ] Step 2: Assess if the change introduces a new "Design Decision" that should be recorded in `docs/architecture-and-walkthrough.md`.
-- [ ] Step 3: For all identified core documents, draft updates as per Document Maintenance Guide, and using the appropriate templates in the `./references` directory and using the samples in  `./references/samples/`.
-- [ ] Step 4: Review against the formatting rules in the [Formatting Rules](#formatting-rules) section.
-- [ ] Step 5: Check that the identified core documents have been updated. If any changes have been missed or performed incorrectly, go back to Step 2 and repeat.
-- [ ] Step 6: Check that the change aligns to the formatting rules. If not, fix them and go back to Step 5.
-- [ ] Step 7: Only finalize and save when all requirements are met.
-- [ ] Step 8: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
-~~~  
+- [ ] Step 3: For all identified core documents, draft updates as per Document Maintenance Guide, and using the appropriate templates in the `./references` directory and using the samples in `./references/samples/`.
+- [ ] Step 4: **Structural Validation**: Perform a manual or automated check (e.g., using `grep`) to ensure every markdown header is followed by a blank line.
+- [ ] Step 5: Review against the formatting rules in the [Formatting Rules](#formatting-rules) section.
+- [ ] Step 6: Check that the identified core documents have been updated. If any changes have been missed or performed incorrectly, go back to Step 2 and repeat.
+- [ ] Step 7: Check that the change aligns to the formatting rules. If not, fix them and go back to Step 6.
+- [ ] Step 8: Only finalize and save when all requirements are met.
+- [ ] Step 9: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
+~~~
 
 ### Summary Table Format
 
