@@ -1,0 +1,78 @@
+---
+version: "1.0"
+name: "[Project Name]"
+description: "[High-level summary of the design system's goals]"
+colors:
+  primary: "#1A1C1E"
+  secondary: "#000000"
+  tertiary: "#FFFFFF"
+  surface: "#F5F5F5"
+  background: "#FFFFFF"
+  error: "#B3261E"
+  on-primary: "#FFFFFF"
+  on-surface: "#000000"
+typography:
+  display-lg:
+    fontFamily: "[Primary font, e.g., Inter]"
+    fontSize: "57px"
+    fontWeight: 400
+    lineHeight: "64px"
+    letterSpacing: "-0.25px"
+  body-md:
+    fontFamily: "[Primary font, e.g., Inter]"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: "24px"
+    letterSpacing: "0.5px"
+rounded:
+  sm: "4px"
+  md: "8px"
+  lg: "16px"
+  full: "9999px"
+spacing:
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+components:
+  # Component-specific overrides and token mappings
+---
+
+# Visual Design and UX Guidelines
+
+This document serves as the single source of truth for the visual identity and user experience.
+
+## Overview
+
+[Holistic description of the brand personality, target audience, and emotional response.]
+
+## Colors
+
+[Detailed rationale for the color palette. Systematic names must match YAML tokens; human-friendly names are encouraged for descriptive text.]
+
+## Typography
+
+[Guidelines for font hierarchy, usage of headers vs. body text, and accessibility considerations.]
+
+## Layout
+
+[Rules for grids, alignment, and the application of spacing tokens.]
+
+## Elevation & Depth
+
+[Specification of shadow systems, tonal layers, and the visual hierarchy of planes.]
+
+## Shapes
+
+[Descriptions of corner treatments and edge language referenced via the `rounded` tokens.]
+
+## Components
+
+[High-level rationale for component design and specific token overrides.]
+
+## Do's and Don't's
+
+[Concrete examples of correct and incorrect usage of the design system.]
+
+## Development CLI UX
+
+[Detail console visual feedback, e.g., progress bars, rich console output - specific to this project]
