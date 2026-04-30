@@ -75,14 +75,15 @@ Here are the core documents that should be maintained by this skill. You MUST re
 
 *   **Focus**: Overall project roadmap and task tracking.
 *   **Template**: [TODO.md.template](./references/TODO.md.template)
-*   **Triggers**: 
+*   **Maintenance Condition**: Only maintain if this file already exists. You may offer to create it, for example, if tasks have been achieved and/or future tasks are being discussed.
+*   **Triggers** include, but are not limited to: 
     - Completing a step or updating the project timeline.
     - If asked to create a new TODO entry.
     - Offer to mark steps as closed when done.
 
 ### 3. `docs/DESIGN.md` (Visual & UX)
 
-*   **Focus**: Visual identity, UX components, and design tokens.
+*   **Focus**: Visual identity, UX components, and design tokens. Can be used by UI design integrations, e.g. Google Stitch.
 *   **Template**: [design.md.template](./references/design.md.template)
 *   **Sample**: [docs/DESIGN.md](./references/samples/docs/DESIGN.md)
 *   **Key Sections**: Visual Identity (Typography, Colours), Visual Effects (e.g. Glassmorphism), Frontend Components (Layout, Carousel, Widget, etc), CLI UX (if present).
@@ -93,7 +94,7 @@ Here are the core documents that should be maintained by this skill. You MUST re
 
 ### 4. `docs/architecture-and-walkthrough.md` (The "Blueprint")
 
-*   **Focus**: System-wide architectural logic and design decisions.
+*   **Focus**: System-wide architectural logic and design decisions. Assess if any change introduces a new "Design Decision" (ADR) that should be recorded in `docs/architecture-and-walkthrough.md`.
 *   **Template**: [architecture-and-walkthrough.md.template](./references/architecture-and-walkthrough.md.template)
 *   **Sample**: [docs/architecture-and-walkthrough.md](./references/samples/docs/architecture-and-walkthrough.md)
 *   **Key Sections**: Design Decisions (ADRs in table format with Rationale), Solution Architecture, Service/Model relationships, Key User Journeys / Walkthroughs
@@ -165,3 +166,14 @@ Documentation Update Progress:
 - [ ] Step 6: Only finalize and save when all requirements are met.
 - [ ] Step 7: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
 ~~~  
+
+### Summary Table Format
+
+When performing Step 7 of the Documentation Review Process, use the following table structure to summarize your work:
+
+| Document | Status | Change Summary / Rationale |
+| :--- | :--- | :--- |
+| `README.md` | [Updated/No Change] | [Brief description of changes OR why no update was needed] |
+| `TODO.md` | [Updated/No Change] | [e.g. Marked Step 4 as complete] |
+| `docs/DESIGN.md` | [Updated/No Change] | [e.g. Added new color tokens to frontmatter] |
+| ... | ... | ... |
