@@ -137,7 +137,8 @@ Here are the core documents that should be maintained by this skill. You MUST re
 ### 7. `conductor/` Documents (Implementation Details)
 
 *   **Focus**: Product logic, product branding, guidelines, and tech stack details. These documents are automatically managed by the Gemini Conductor Extension, but if changes are done outside of Conductor, these documents should be updated to reflect the changes.
-*   **Files in Scope**: `product.md`, `product-guidelines.md`, `tech-stack.md`. (Any other Conductor files are Google Conductor internal only and should not be maintained by this skill.)
+*   **Files in Scope**: `product.md`, `product-guidelines.md`, `tech-stack.md`. 
+*   **Strict Exclusions**: NEVER modify any other files in the `conductor/` directory, including but not limited to: `workflow.md`, `tracks.md`, `setup_state.json`, or any files within the `code_styleguides/` or `archive/` directories.
 *   **Maintenance Condition**: ONLY maintain these documents if they already exist in the codebase.
 *   **Triggers** include, but are not limited to:
     - Major tech stack shifts.
@@ -149,7 +150,6 @@ Here are the core documents that should be maintained by this skill. You MUST re
 
 - **Headings**: There MUST be a blank line after every markdown header (e.g., `# Header\n\nContent`). This ensures consistent rendering across all Markdown viewers.
 - **Tables**: Always use tables for configurations, model fields, and design decisions to improve readability.
-- **Spacing**: There MUST be a blank line after every markdown header.
 - **Code blocks**: All code MUST be wrapped in fenced code blocks with appropriate language identifiers.
 
 ## Documentation Review Process
@@ -160,19 +160,20 @@ Copy this checklist and track your progress when updating documentation:
 Documentation Update Progress:
 
 - [ ] Step 1: Identify which of the core documents are impacted by code changes.
-- [ ] Step 2: Assess if the change introduces a new "Design Decision" that should be recorded in `docs/architecture-and-walkthrough.md`.
-- [ ] Step 3: For all identified core documents, draft updates as per Document Maintenance Guide, and using the appropriate templates in the `./references` directory and using the samples in `./references/samples/`.
-- [ ] Step 4: **Structural Validation**: Perform a manual or automated check (e.g., using `grep`) to ensure every markdown header is followed by a blank line.
-- [ ] Step 5: Review against the formatting rules in the [Formatting Rules](#formatting-rules) section.
-- [ ] Step 6: Check that the identified core documents have been updated. If any changes have been missed or performed incorrectly, go back to Step 2 and repeat.
-- [ ] Step 7: Check that the change aligns to the formatting rules. If not, fix them and go back to Step 6.
-- [ ] Step 8: Only finalize and save when all requirements are met.
-- [ ] Step 9: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
+- [ ] Step 2: Verify that NO out-of-scope files (e.g. `workflow.md`, `code_styleguides/`) are included in the review.
+- [ ] Step 3: Assess if the change introduces a new "Design Decision" that should be recorded in `docs/architecture-and-walkthrough.md`.
+- [ ] Step 4: For all identified core documents, draft updates as per Document Maintenance Guide, and using the appropriate templates in the `./references` directory and using the samples in `./references/samples/`.
+- [ ] Step 5: **Structural Validation**: Perform a manual or automated check (e.g. using `grep`) to ensure every markdown header is followed by a blank line.
+- [ ] Step 6: Review against the formatting rules in the [Formatting Rules](#formatting-rules) section.
+- [ ] Step 7: Check that the identified core documents have been updated. If any changes have been missed or performed incorrectly, go back to Step 2 and repeat.
+- [ ] Step 8: Check that the change aligns to the formatting rules. If not, fix them and go back to Step 6.
+- [ ] Step 9: Only finalize and save when all requirements are met.
+- [ ] Step 10: Summarise with a table of which documents were updated and what changes were made. Also include which documents (if any) were not updated and why.
 ~~~
 
 ### Summary Table Format
 
-When performing Step 8 of the Documentation Review Process, use the following table structure to summarise your work:
+When performing the final summarisation step of the Documentation Review Process, use the following table structure to summarise your work:
 
 | Document | Status | Change Summary / Rationale |
 | :--- | :--- | :--- |
