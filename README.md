@@ -19,6 +19,7 @@ This repository serves as a public collection of agentic skills developed for AI
 | Skill | Purpose | Key Features |
 | :--- | :--- | :--- |
 | **Project Documentation** | Specialist framework for technical docs. | Creation and management of software project documentation, including: README, TODO, DESIGN, Architecture, Testing, and Deployment. |
+| **Installing Antigravity Skills** | Skill installer and relocator for Antigravity. | Automates installation of new skills via `npx` and moves them to the shared global location (`~/.gemini/skills/`). |
 
 ### Installation Instructions
 
@@ -36,6 +37,7 @@ To install only selected skills, you can use the `--skill` option:
 
 ```bash
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill project-documentation
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill installing-antigravity-skills
 ```
 
 Check my blog [Confused About Where to Put Your Agent Skills?](https://medium.com/google-cloud/confused-about-where-to-put-your-agent-skills-ea778f3c64f3) for more information on where you can put these skills.
@@ -50,9 +52,11 @@ This repo is structured to allow for easy discovery and management of skills. Sk
 
 ```text
 dazbo-agent-skills/
-├── skills/                      # Core agent skills
-│   └── project-documentation/   # Documentation specialist
-│       ├── SKILL.md             # Main instruction file
-│       └── references/          # Templates and samples
-└── README.md                    # This storefront
+├── skills/                                # Core agent skills
+│   ├── maintaining-core-documentation/    # Documentation specialist
+│   │   ├── SKILL.md                       # Main instruction file
+│   │   └── references/                    # Templates and samples
+│   └── installing-antigravity-skills/     # Skill installer and relocator
+│       └── SKILL.md                       # Main instruction file
+└── README.md                              # This storefront
 ```

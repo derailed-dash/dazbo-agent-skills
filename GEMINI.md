@@ -11,7 +11,7 @@
 - Progressive disclosure:
   - Keep the skill body under 500 lines.
   - Split files when the body grows large.  E.g. "to do x, read ./thing-x.md and follow its instructions"
-  - Use Unix-style paths for all platforms.
+  - Use Unix-style paths when referencing files to load, for all platforms. (This does not apply to actual code or code snippets.)
   - Structure longer mds and reference files with a ToC at the top.
 - Numbered lists work well for reliability.
 - For complex multi-step workflows, consider validating intermediate steps.
