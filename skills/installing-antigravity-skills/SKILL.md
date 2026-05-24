@@ -69,7 +69,7 @@ Depending on the operating system, execute the appropriate shell command or scri
 Run this clean replacement script. It removes any existing versions in `~/.gemini/skills/` before moving the newly installed versions:
 
 ```bash
-for d in ~/.agents/skills/*/; do [ -d "$d" ] && rm -rf "$HOME/.gemini/skills/$(basename "$d")"; done && mv ~/.agents/skills/* ~/.gemini/skills/
+mkdir -p "$HOME/.gemini/skills/" && for d in "$HOME"/.agents/skills/*/; do [ -d "$d" ] && rm -rf "$HOME/.gemini/skills/$(basename "$d")"; done && mv "$HOME"/.agents/skills/* "$HOME/.gemini/skills/"
 ```
 
 ### Windows (PowerShell)
