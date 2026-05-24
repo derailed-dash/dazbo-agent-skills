@@ -1,9 +1,9 @@
 ---
-name: installing-antigravity-skills
+name: deploy-skills-in-antigravity
 description: Downloads, installs, and relocates new agent skills to the global Antigravity shared directory (`~/.gemini/skills/`) to make them available across all tools. Use when the user requests to download, install, import, or update new agent skills.
 ---
 
-# Installing Antigravity Skills
+# Deploying Skills in Antigravity
 
 This skill provides a structured workflow for downloading, installing, and relocating new agent skills. It automates the installation process via `npx` and ensures that all downloaded skills are cleanly migrated to the global/shared location so they are instantly accessible to all Google Antigravity tools.
 
@@ -19,13 +19,15 @@ This skill provides a structured workflow for downloading, installing, and reloc
 
 This skill MUST trigger whenever:
 
-- The user asks to download, install, import, or update a new agent skill.
-- The user mentions adding a skill from a repository or a specific branch.
+- The user asks to download, install, import, setup, or update a new agent skill.
+- The user mentions adding a skill from a repository or a specific branch/commit.
+- The user or agent refers to CLI commands such as `npx skills add`, `skills add`, `skills install`, or `npx skills`.
+- The user provides a repository URL (e.g. `https://github.com/...`) and asks to "add" or "integrate" its skills.
 
 ## Prerequisites
 
 - **Node.js**: The system must have `npx` available to run the `skills` tool.
-- **Access Permissions**: Ensure you have directory write permissions for `~/.agents/skills/` and `~/.gemini/skills/`.
+- **Access Permissions**: Ensure you have directory write permissions for `~/.agents/skills/` and the global (Agy) shared directory `~/.gemini/skills/`.
 
 ## Installation and Relocation Workflow
 
@@ -58,7 +60,7 @@ Use the appropriate OS-specific relocation command based on the host operating s
 
 **Step 4: Verify that files are correctly positioned**
 
-Check the contents of `~/.gemini/skills/` to ensure the new skill directory has been relocated successfully and is not empty.
+Perform the comprehensive checks outlined in the [Verification Loop](#verification-loop) to ensure the skill is fully functional and registered.
 
 ## OS-Specific Relocation Commands
 
@@ -69,7 +71,7 @@ Depending on the operating system, execute the appropriate shell command or scri
 Run this clean replacement script. It removes any existing versions in `~/.gemini/skills/` before moving the newly installed versions:
 
 ```bash
-mkdir -p "$HOME/.gemini/skills/" && for d in "$HOME"/.agents/skills/*/; do [ -d "$d" ] && rm -rf "$HOME/.gemini/skills/$(basename "$d")"; done && mv "$HOME"/.agents/skills/* "$HOME/.gemini/skills/"
+mkdir -p "$HOME/.gemini/skills/" && [ -d "$HOME/.agents/skills" ] && for d in "$HOME/.agents/skills"/*/; do [ -d "$d" ] && rm -rf "$HOME/.gemini/skills/$(basename "$d")" && mv "$d" "$HOME/.gemini/skills/"; done
 ```
 
 ### Windows (PowerShell)
@@ -89,7 +91,25 @@ Get-ChildItem -Path $sourceDir -Directory | ForEach-Object {
 
 ## Verification Loop
 
-1. Run a check to verify that the skills have been successfully moved:
-   - On Linux/macOS: `ls -la ~/.gemini/skills/`
-   - On Windows: `Get-ChildItem "$HOME\.gemini\skills"`
-2. If the files are not present in the target directory, trace back through the migration logs to find permission or pathway errors. Do not complete the task until the skill is verified to exist in `~/.gemini/skills/`.
+Before completing the task, the agent MUST run the following verification sequence:
+
+### 1. Folder Existence and Relocation Verification
+Confirm the skill directory has been successfully moved to the global shared path:
+- **Linux/macOS:** `ls -la ~/.gemini/skills/`
+- **Windows:** `Get-ChildItem "$HOME\.gemini\skills"`
+
+### 2. Frontmatter & Integrity Check
+Verify that the `SKILL.md` file exists in the target directory and has a valid YAML frontmatter block:
+- **Command:** Read the first 10 lines of the relocated `SKILL.md` and confirm it starts with `---` and contains valid `name` and `description` keys.
+
+### 3. Subdirectory Validation
+For complex skills, ensure that nested folders (such as `references/`, `evals/`, or `scripts/`) are present and populated:
+- **Command:** Verify that critical folders are present and not empty.
+
+### 4. Global Registry Check
+Confirm the Skills CLI successfully registers and lists the newly relocated skill:
+- **Command:** `npx skills ls -g` (or `npx skills ls -g --json`)
+- **Success Criteria:** The output must list the relocated skill name alongside its absolute global path.
+
+### 5. Permission & Readability Check
+Ensure that the relocated skill files are readable by the active shell process to prevent loader failures during execution.
