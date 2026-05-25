@@ -20,6 +20,7 @@ This repository serves as a public collection of agentic skills developed for AI
 | :--- | :--- | :--- |
 | **Project Documentation** | Specialist framework for technical docs. | Creation and management of software project documentation, including: README, TODO, DESIGN, Architecture, Testing, and Deployment. |
 | **Deploying Skills in Antigravity** | Skill installer and relocator for Antigravity. | Automates installation of new skills via `npx` and moves them to the shared global location (`~/.gemini/skills/`). |
+| **Convert to Dev.to** | Standardises Markdown for Dev.to publication. | Automates YAML frontmatter insertion, liquid tags conversion, variable formatting, and heading hierarchy standardisation. |
 
 ### Installation Instructions
 
@@ -36,8 +37,9 @@ npx skills add https://github.com/derailed-dash/dazbo-agent-skills
 To install only selected skills, you can use the `--skill` option:
 
 ```bash
-npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill project-documentation
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill maintaining-core-documentation
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill deploy-skills-in-antigravity
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill convert-to-devto
 ```
 
 Check my blog [Confused About Where to Put Your Agent Skills?](https://medium.com/google-cloud/confused-about-where-to-put-your-agent-skills-ea778f3c64f3) for more information on where you can put these skills.
@@ -56,7 +58,9 @@ dazbo-agent-skills/
 │   ├── maintaining-core-documentation/    # Documentation specialist
 │   │   ├── SKILL.md                       # Main instruction file
 │   │   └── references/                    # Templates and samples
-│   └── deploy-skills-in-antigravity/      # Skill installer and relocator
+│   ├── deploy-skills-in-antigravity/      # Skill installer and relocator
+│   │   └── SKILL.md                       # Main instruction file
+│   └── convert-to-devto/                  # Dev.to publisher formatter
 │       └── SKILL.md                       # Main instruction file
 └── README.md                              # This storefront
 ```
