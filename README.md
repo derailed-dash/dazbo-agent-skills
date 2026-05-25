@@ -7,6 +7,12 @@ This repository serves as a public collection of agentic skills developed for AI
 - Author: Dazbo (GitHub: derailed-dash)
 - Repository: https://github.com/derailed-dash/dazbo-agent-skills
 
+## Install Count
+
+According to [Skills.sh](https://skills.sh/), these skills have been installed:
+
+[![skills.sh](https://skills.sh/b/derailed-dash/dazbo-agent-skills)](https://skills.sh/derailed-dash/dazbo-agent-skills)
+
 ## Table of Contents
 
 - [Available Skills](#available-skills)
