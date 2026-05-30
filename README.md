@@ -22,11 +22,12 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 
 ## Available Skills
 
-| Skill | Purpose | Key Features |
+| Skill | Purpose | About & Triggers |
 | :--- | :--- | :--- |
-| **Project Documentation** | Specialist framework for technical docs. | Creation and management of software project documentation, including: README, TODO, DESIGN, Architecture, Testing, and Deployment. |
-| **Deploying Skills in Antigravity** | Skill installer and relocator for Antigravity. | Automates installation of new skills via `npx` and moves them to the shared global location (`~/.gemini/skills/`). |
-| **Convert to Dev.to** | Standardises Markdown for Dev.to publication. | Automates YAML frontmatter insertion, liquid tags conversion, variable formatting, and heading hierarchy standardisation. |
+| **Project Documentation** | Specialist framework for repository docs. | **Use when** modifying features, system architecture, or tests. Guides the creation and precise synchronisation of `README`, `TODO`, `DESIGN`, `Architecture`, `Testing`, and `Deployment` files. |
+| **Deploying Skills** | Global skill installer and relocator. | **Use when** downloading, importing, or updating new agent skills. Automates the installation process via `npx` and safely moves skills to the shared global path (`~/.gemini/skills/`). |
+| **Convert to Dev.to** | Standardises Markdown for publication. | **Use when** preparing technical articles for Dev.to. Automates insertion of YAML frontmatter, liquid syntax conversion, variable formatting, and heading structures. |
+| **Secrets with Git-Crypt** | Git-Crypt secrets protection workflow. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies (`.enc`) while keeping unencrypted versions safely gitignored. |
 
 ### Installation Instructions
 
@@ -46,6 +47,7 @@ To install only selected skills, you can use the `--skill` option:
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill maintaining-core-documentation
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill deploy-skills-in-antigravity
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill convert-to-devto
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill secrets-with-git-crypt
 ```
 
 Check my blog [Confused About Where to Put Your Agent Skills?](https://medium.com/google-cloud/confused-about-where-to-put-your-agent-skills-ea778f3c64f3) for more information on where you can put these skills.
@@ -66,7 +68,11 @@ dazbo-agent-skills/
 │   │   └── references/                    # Templates and samples
 │   ├── deploy-skills-in-antigravity/      # Skill installer and relocator
 │   │   └── SKILL.md                       # Main instruction file
-│   └── convert-to-devto/                  # Dev.to publisher formatter
-│       └── SKILL.md                       # Main instruction file
+│   ├── convert-to-devto/                  # Dev.to publisher formatter
+│   │   └── SKILL.md                       # Main instruction file
+│   └── secrets-with-git-crypt/            # Secrets management with git-crypt
+│       ├── SKILL.md                       # Main instruction file
+│       └── scripts/                       # Automation helper scripts
+│           └── git-crypt-helper.sh
 └── README.md                              # This storefront
 ```
