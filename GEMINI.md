@@ -1,5 +1,7 @@
 # Skills Writing and Best Practices
 
+Consider this guide as additional recommendations on top of your own skills-writing training.
+
 - Naming:
   - Consider using verb(ing)+noun.
   - Avoid vague descriptions, like "documentation".
