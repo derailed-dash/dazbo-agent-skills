@@ -1,6 +1,8 @@
 ---
 name: deploy-skills-in-antigravity
 description: Downloads, installs, and relocates new agent skills to the global Antigravity shared directory (`~/.gemini/skills/`) to make them available across all tools. Use when the user requests to download, install, import, or update new agent skills.
+metadata:
+  author: Darren "Dazbo" Lester
 ---
 
 # Deploying Skills in Antigravity

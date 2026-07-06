@@ -1,11 +1,13 @@
 ---
 name: secrets-with-git-crypt
 description: Use when managing encryption and decryption of secrets (like .env or *.tfvars) using git-crypt. Helps install git-crypt, initialize/unlock repositories, and maintain parallel unencrypted/encrypted file copies securely.
+metadata:
+  author: Darren "Dazbo" Lester
 ---
 
 # Secrets Management with Git-Crypt
 
-This skill provides a secure, structured workflow for managing repository secrets (e.g. `.env`, `*.tfvars`, `sec.json`) using `git-crypt`. It guides the agent to ensure sensitive credentials are never checked in as plaintext, instead maintaining parallel encrypted `.enc` versions checked into Git.
+This skill provides a secure, structured workflow for managing repository secrets (e.g. `.env`, `*.tfvars`, `sec.json`, `settings.json`) using `git-crypt`. It guides the agent to ensure sensitive credentials are never checked in as plaintext, instead maintaining parallel encrypted `.enc` versions checked into Git.
 
 ## Table of Contents
 
@@ -20,9 +22,9 @@ This skill provides a secure, structured workflow for managing repository secret
 This skill MUST trigger whenever:
 
 - The user mentions `git-crypt`, `encryption`, `decryption`, or `secrets management`.
-- The user requests to store sensitive files (like `.env`, `.tfvars`, keyfiles) in the repository.
+- The user requests to store sensitive files (like `.env`, `*.tfvars`, `settings.json`, keyfiles) in the repository.
 - The user attempts to commit or push files that should be encrypted (e.g. `.env`, `*.tfvars`, `sec.json`) to the repository.
-- Cloning an existing repository that contains `.enc` files (e.g. `.env.enc`, `terraform.tfvars.enc`), indicating it was previously protected by git-crypt.
+- Cloning an existing repository that contains `.enc` files (e.g. `.env.enc`, `terraform.tfvars.enc`, `settings.json.enc`), indicating it was previously protected by git-crypt.
 - Initializing a new repository and setting up local/remote secret configurations.
 - Changing or adding secrets credentials that need to be committed securely.
 
@@ -79,7 +81,7 @@ Verify that `.gitattributes` in the root of the project contains the filter decl
 ```text
 *.enc filter=git-crypt diff=git-crypt
 ```
-All unencrypted files (e.g., `.env`, `variables.tfvars`) MUST be explicitly added to `.gitignore`. Running the helper script sync commands automatically appends them, but you must double-check that they are not tracked as plaintext in Git.
+All unencrypted files (e.g. `.env`, `settings.json`, `variables.tfvars`) MUST be explicitly added to `.gitignore`. Running the helper script sync commands automatically appends them, but you must double-check that they are not tracked as plaintext in Git.
 
 **Step 4: Perform file synchronization**
 

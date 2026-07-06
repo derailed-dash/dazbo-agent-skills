@@ -1,6 +1,8 @@
 ---
 name: maintaining-core-documentation
 description: Creates, maintains, and synchronizes core project documentation (README, TODO, DESIGN, Architecture, Testing, Deployment). Use when the user needs to write, update, or structure project documentation based on codebase changes, or whenever the user asks to perform any documentation tasks or documentation review.
+metadata:
+  author: Darren "Dazbo" Lester
 ---
 
 # Maintaining Core Documentation

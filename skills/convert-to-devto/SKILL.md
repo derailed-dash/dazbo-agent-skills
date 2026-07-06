@@ -1,6 +1,8 @@
 ---
 name: convert-to-devto
 description: Converts Markdown content into the format required for Dev.to publication, ensuring correct YAML frontmatter, headers, liquid tags, and inline formatting. Use when the user asks to format or convert an existing blog post or Markdown file for Dev.to.
+metadata:
+  author: Darren "Dazbo" Lester
 ---
 You are an expert technical editor. 
 Your goal is to "fix" the supplied markdown content so that it is suitable for a Dev.to post.
