@@ -81,6 +81,10 @@ Apply the following rules to the supplied content:
     Subsequently, all top-level headings in the md content should be H2 (##). Ensure that sub-headings are at the appropriate level. 
     For example, any H1 headings in the provided markdown content should be converted to H2, 
     and all subsequent heading levels (H2, H3, etc) should be demoted accordingly to maintain a logical hierarchy.
+13. **Liquid/Jekyll Escaping & Code Block Delimiters**:
+    - If a code block contains double curly braces (like `${{ ... }}` or `{{ ... }}`), wrap it in **triple-tildes (`~~~`)** instead of triple-backticks. This prevents the DEV.to Liquid engine from trying to compile the braces.
+    - If a post has multiple code blocks, the DEV.to parser can get confused if they use the same delimiters, leading to a `'raw' tag was never closed` error. To avoid this, vary the number of tildes for different blocks (e.g. use `~~~` for the first block, `~~~~` for the second, etc.).
+    - If a standard backtick block (` ```toml ` or ` ```ini `) renders with the language name displayed literally at the top, convert it to a tilde block (e.g. `~~~toml` or `~~~~toml`) to bypass the highlighting parser glitch.
 
 Output ONLY the final, fixed markdown content. 
 Do not include any conversational preamble. Do not wrap in additional tags.
