@@ -29,6 +29,7 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 | **Convert to Dev.to** | Standardises Markdown for publication. | **Use when** preparing technical articles for Dev.to. Automates insertion of YAML frontmatter, liquid syntax conversion, variable formatting, and heading structures. |
 | **Secrets with Git-Crypt** | Git-Crypt secrets protection workflow. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies (`.enc`) while keeping unencrypted versions safely gitignored. |
 | **Create MD from BrowserMCP Snapshot** | Converts BrowserMCP accessibility tree snapshots to Markdown. | **Use when** a webpage's has been captured with the BrowserMCP `browser_snapshot` tool. Runs a Python parser to reconstruct structured, high-fidelity Markdown representations of the page content (headings, tables, lists, blockquotes). |
+| **Install Gemini Code Review Action** | Installs Dazbo's PR code review & issue triage action. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. |
 
 ### Installation Instructions
 
@@ -50,6 +51,7 @@ npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill deplo
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill convert-to-devto
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill secrets-with-git-crypt
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill create-md-from-browsermcp-snapshot
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill install-gemini-code-review-action
 ```
 
 Check my blog [Confused About Where to Put Your Agent Skills?](https://medium.com/google-cloud/confused-about-where-to-put-your-agent-skills-ea778f3c64f3) for more information on where you can put these skills.
@@ -76,9 +78,11 @@ dazbo-agent-skills/
 │   │   ├── SKILL.md                       # Main instruction file
 │   │   └── scripts/                       # Automation helper scripts
 │   │       └── git-crypt-helper.sh
-│   └── create-md-from-browsermcp-snapshot/# Converts accessibility trees to MD
-│       ├── SKILL.md                       # Main instruction file
-│       └── scripts/                       # Reusable Python parsing script
-│           └── parse_snapshot.py
+│   ├── create-md-from-browsermcp-snapshot/# Converts accessibility trees to MD
+│   │   ├── SKILL.md                       # Main instruction file
+│   │   └── scripts/                       # Reusable Python parsing script
+│   │       └── parse_snapshot.py
+│   └── install-gemini-code-review-action/ # Installs PR code review & issue triage action
+│       └── SKILL.md                       # Main instruction file
 └── README.md                              # This storefront
 ```
