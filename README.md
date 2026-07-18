@@ -22,14 +22,14 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 
 ## Available Skills
 
-| Skill | Purpose | About & Triggers |
+| Skill | Purpose & Value | When to Use & Triggers |
 | :--- | :--- | :--- |
-| **Project Documentation** | Specialist framework for repository docs. | **Use when** modifying features, system architecture, or tests. Guides the creation and precise synchronisation of `README`, `TODO`, `DESIGN`, `Architecture`, `Testing`, and `Deployment` files. |
-| **Deploying Skills** | Global skill installer and relocator. | **Use when** downloading, importing, or updating new agent skills. Automates the installation process via `npx` and safely moves skills to the shared global path (`~/.gemini/skills/`). |
-| **Convert to Dev.to** | Standardises Markdown for publication. | **Use when** preparing technical articles for Dev.to. Automates insertion of YAML frontmatter, liquid syntax conversion, variable formatting, and heading structures. |
-| **Secrets with Git-Crypt** | Git-Crypt secrets protection workflow. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies (`.enc`) while keeping unencrypted versions safely gitignored. |
-| **Create MD from BrowserMCP Snapshot** | Converts BrowserMCP accessibility tree snapshots to Markdown. | **Use when** a webpage's has been captured with the BrowserMCP `browser_snapshot` tool. Runs a Python parser to reconstruct structured, high-fidelity Markdown representations of the page content (headings, tables, lists, blockquotes). |
-| **Install Gemini Code Review Action** | Installs Dazbo's PR code review & issue triage action. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. |
+| **Project Documentation** | End-to-end framework for managing, structuring, and synchronising repository docs. Helps keep documentation in perfect sync with codebase changes to prevent documentation rot. | **Use when** modifying features, system architecture, or tests. Guides the creation and precise synchronisation of core files like `README`, `TODO`, `DESIGN`, `Architecture`, `Testing`, and `Deployment`. |
+| **Deploying Skills** | Automated installer, relocator, and manager for Antigravity/Gemini agent skills. Saves time by automatically managing local and global paths. | **Use when** downloading, importing, or updating new agent skills. Automates the installation process via `npx` and safely moves skills to the shared global path (`~/.gemini/skills/`). |
+| **Convert to Dev.to** | Formatter that prepares standard Markdown files for publishing on Dev.to. Ensures metadata and syntax compatibility without manual formatting. | **Use when** preparing technical articles for Dev.to. Automates insertion of YAML frontmatter, liquid syntax conversion, variable formatting, and heading structures. |
+| **Secrets with Git-Crypt** | Production-grade secrets management workflow. Keeps plaintext files safely gitignored while tracking encrypted versions (`.enc`) in Git. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies, avoiding accidental leak of credentials. |
+| **Create MD from BrowserMCP Snapshot** | High-fidelity parser to convert raw webpage accessibility trees to structured Markdown. Makes parsed web pages easy for agents to read and search. | **Use when** a webpage has been captured with the BrowserMCP `browser_snapshot` tool. Runs a Python parser to reconstruct structured representations of headings, tables, lists, and links. |
+| **Install Gemini Code Review Action** | Automated setup for Dazbo's Gemini-based PR Code Review & Issue Triage action. Streamlines setup and configures secure API credentials. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. Offers interactive credential setup using the GitHub CLI (`gh`). |
 
 ### Installation Instructions
 
