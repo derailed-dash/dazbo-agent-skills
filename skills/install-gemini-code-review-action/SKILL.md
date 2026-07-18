@@ -73,10 +73,14 @@ Check if the GitHub CLI (`gh`) is installed and authenticated by running `gh aut
 1. Ask the user for their Gemini API key (from Google AI Studio).
 2. Offer to set the GitHub repository secret automatically by running:
    ```bash
-   gh secret set GEMINI_API_KEY --body "<API_KEY>"
+   gh secret set GEMINI_API_KEY
+   ```
+   Or securely piping it to avoid command history visibility:
+   ```bash
+   echo "<API_KEY>" | gh secret set GEMINI_API_KEY
    ```
    > [!IMPORTANT]
-   > Ensure the key is not logged or left in shell history if possible, or use standard input redirection to set it securely.
+   > Do NOT pass the secret directly in the shell command via flags (e.g. `--body`) if it might be logged in terminal history. Prompt the user for interactive input or use secure redirection.
 
 **If `gh` is NOT available**:
 1. Provide instructions on how to add the `GEMINI_API_KEY` repository secret manually in GitHub Settings:
