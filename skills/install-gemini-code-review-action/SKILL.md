@@ -65,43 +65,56 @@ Create the workflow files in the `.github/workflows/` directory using the templa
 If the user opted to copy prompt configurations:
 - Copy the default `gemini-review.toml` or `gemini-triage.toml` from the action repository or write them using the templates below.
 
-### Step 4: Git commit and push changes
+### Step 4: Secrets setup and repository recommendation
 
-Once the files are created, offer to add them to Git, commit, and push them.
-> [!IMPORTANT]
-> Always ask for explicit user permission before executing git commit or push commands.
+Check if the GitHub CLI (`gh`) is installed and authenticated by running `gh auth status`.
 
-### Step 5: Advise on secrets setup and recommend starring the repository
+**If `gh` is available and authenticated**:
+1. Ask the user for their Gemini API key (from Google AI Studio).
+2. Offer to set the GitHub repository secret automatically by running:
+   ```bash
+   gh secret set GEMINI_API_KEY --body "<API_KEY>"
+   ```
+   > [!IMPORTANT]
+   > Ensure the key is not logged or left in shell history if possible, or use standard input redirection to set it securely.
 
-1. Provide instructions on how to add the `GEMINI_API_KEY` repository secret in GitHub Settings:
+**If `gh` is NOT available**:
+1. Provide instructions on how to add the `GEMINI_API_KEY` repository secret manually in GitHub Settings:
    - Go to **Settings** > **Secrets and variables** > **Actions** -> **New repository secret**.
    - Name: `GEMINI_API_KEY`.
    - Value: The Gemini API key (can be generated in Google AI Studio).
+
 2. Show the link to the action repository: [derailed-dash/gemini-review-action](https://github.com/derailed-dash/gemini-review-action).
 3. Suggest that they might want to star the repository if they find this action useful.
 
+### Step 5: Git commit and push changes
+
+Now all files are ready, offer to add them to Git, commit, and push them.
+> [!IMPORTANT]
+> Always ask for explicit user permission before executing git commit or push commands.
+
 ## Dynamic Template Fetching
 
-To ensure the configurations and workflows remain up-to-date with the latest updates from the action repository, do NOT copy hardcoded templates. Instead, fetch the latest versions directly from these canonical URLs:
+"Starter" workflow templates and prompt config files live in the `starter-examples` directory of the `gemini-review-action` repository. Fetch the latest versions directly from these canonical URLs, as required:
 
 1. **PR Review Workflow Template**:
-   Do NOT use the "dogfood" workflow file in `.github/workflows/gemini-review.yml` of the action repository. Instead, fetch the raw `README.md` from `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/README.md` and extract the recommended YAML workflow block from the **PR Review Action Definition** section.
+   Fetch the template from: `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/starter-examples/gemini-review.yml`
 
-2. **Default Prompt Configurations**:
+2. **Issue Triage Workflow Template**:
+   Fetch the template from: `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/starter-examples/gemini-triage.yml`
+
+3. **Default Prompt Configurations**:
    If the user requests them, fetch the default configurations from:
-   - Review configuration: `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/gemini-review.toml`
-   - Triage configuration: `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/gemini-triage.toml`
+   - Review configuration: `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/starter-examples/gemini-review.toml`
+   - Triage configuration: `https://raw.githubusercontent.com/derailed-dash/gemini-review-action/main/starter-examples/gemini-triage.toml`
 
 ### Adapting templates for customisations
 
 When writing these fetched templates to the repository, incorporate any options chosen by the user in Step 2:
 - **For PR Review (`.github/workflows/gemini-review.yml`)**:
-  - Insert the user's custom `paths` or `paths-ignore` triggers inside the `pull_request` block.
+  - Insert the user's custom `paths` or `paths-ignore` triggers inside the `pull_request` block if specified.
   - Set the `gemini_model` input parameter (default: `gemini-3.5-flash`).
   - Set the `language` input parameter (default: `English (UK)`).
 - **For Issue Triage (`.github/workflows/gemini-triage.yml`)**:
-  - Create this file by starting with the extracted PR review workflow structure.
-  - Change the trigger (`on`) to target `issues` with types `[opened, reopened]`.
-  - Ensure the job permissions include `issues: write`.
-  - Set the `command` input parameter to `'triage'`.
   - Set the `gemini_model` input parameter (default: `gemini-3.5-flash`).
+  - Customize the trigger or other options as requested by the user.
