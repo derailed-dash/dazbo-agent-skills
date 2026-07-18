@@ -82,8 +82,8 @@ Apply the following rules to the supplied content:
     For example, any H1 headings in the provided markdown content should be converted to H2, 
     and all subsequent heading levels (H2, H3, etc) should be demoted accordingly to maintain a logical hierarchy.
 13. **Liquid/Jekyll Escaping & Code Block Delimiters**:
-    - If a code block contains double curly braces (like `${{ ... }}` or `{{ ... }}`), wrap it in **triple-tildes (`~~~`)** instead of triple-backticks. This prevents the DEV.to Liquid engine from trying to compile the braces.
-    - If a post has multiple code blocks, the DEV.to parser can get confused if they use the same delimiters, leading to a `'raw' tag was never closed` error. To avoid this, vary the number of tildes for different blocks (e.g. use `~~~` for the first block, `~~~~` for the second, etc.).
+    - **Do NOT use `{% raw %}` or `{% endraw %}` tags** around or inside code blocks. DEV.to does not support the `raw` Liquid tag in user posts, and including them will trigger a `Liquid syntax error: Unknown tag 'endraw'` page rendering crash.
+    - Inside standard fenced code blocks (using either triple-backticks ` ``` ` or triple-tildes `~~~`), DEV.to natively disables Liquid compilation. Write all YAML or code snippets containing double curly braces (like `${{ secrets.GEMINI_API_KEY }}`) exactly as-is, without any escaping.
     - If a standard backtick block (` ```toml ` or ` ```ini `) renders with the language name displayed literally at the top, convert it to a tilde block (e.g. `~~~toml` or `~~~~toml`) to bypass the highlighting parser glitch.
 
 Output ONLY the final, fixed markdown content. 
