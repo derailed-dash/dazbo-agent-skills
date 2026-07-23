@@ -42,6 +42,7 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.5-flash'
-          language: 'English (UK)'           # Optional (e.g. English (UK), French, Spanish)
-          # timeout: '60'                     # Optional API timeout in seconds
+          gemini_model: 'gemini-3.6-flash'
+          persona: 'palpatine'
+          language: 'English (UK)'
+          include_comment_history: 'true'
