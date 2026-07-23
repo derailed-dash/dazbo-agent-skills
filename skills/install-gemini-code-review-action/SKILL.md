@@ -166,13 +166,16 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
 
       - name: Gemini Code Review
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-      - uses: actions/checkout@v6
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           gemini_model: 'gemini-3.6-flash'
           persona: 'straight' # Options: straight, dazbo, palpatine
           language: 'English (UK)'
