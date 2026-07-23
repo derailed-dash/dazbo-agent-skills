@@ -172,7 +172,7 @@ jobs:
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v6
           gemini_model: 'gemini-3.6-flash'
           persona: 'straight' # Options: straight, dazbo, palpatine
           language: 'English (UK)'
