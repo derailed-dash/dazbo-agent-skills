@@ -199,7 +199,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Gemini Issue Triage
         uses: derailed-dash/gemini-review-action@v1
