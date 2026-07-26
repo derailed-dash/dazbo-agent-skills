@@ -92,8 +92,9 @@ Whenever disabling a specialised or niche domain skill in `skills.json` (skills 
 
 ---
 
-## Workflow Phase 4: Portability & `skills.json` Exclusions
+### Antigravity `skills.json` Syntax
 
+- **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
 ### Antigravity `skills.json` Syntax
 - **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
 - **Disabled Skill**: Plain string in `exclude` array (e.g. `"alloydb-basics"`).
