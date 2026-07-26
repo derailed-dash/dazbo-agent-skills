@@ -74,7 +74,9 @@ Apply the following rules to the supplied content:
 11. **Liquid Tags**: Convert standalone Twitter and YouTube links to Dev.to Liquid tags.
     - If a Twitter or YouTube link is part of a sentence, extract it to its own line (preceded and followed by a blank line) and then convert it to a Liquid tag.
     - Twitter/X: `https://twitter.com/user/status/123` or `x.com/...` -> `{% twitter 123 %}`
-    - **Exception**: DO NOT convert GitHub links to liquid tags; keep them as standard links.
+    - **Exceptions**:
+      - DO NOT convert GitHub links to liquid tags; keep them as standard links.
+      - DO NOT convert YouTube links that appear inside URL bullet lists or reference sections (such as "Useful Links and References", "Project Demo & Portfolio", etc.). Keep them as standard Markdown links (e.g. `- [FinSavant YouTube Demo](https://www.youtube.com/watch?v=zs_IRUxIx4E)`) to avoid interrupting link lists with large embeds.
     - YouTube: `https://youtube.com/watch?v=123` or `youtu.be/123` -> `{% youtube 123 %}`
 12. **Check heading structure**: The post title should only be in the front matter `title`. 
     It should not be repeated in the markdown content.

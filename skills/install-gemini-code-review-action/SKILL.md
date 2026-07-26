@@ -164,6 +164,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      statuses: write
+      checks: write
 
     steps:
       - name: Checkout repository
