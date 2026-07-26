@@ -30,6 +30,7 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 | **Secrets with Git-Crypt** | Production-grade secrets management workflow. Keeps plaintext files safely gitignored while tracking encrypted versions (`.enc`) in Git. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies, avoiding accidental leak of credentials. |
 | **Create MD from BrowserMCP Snapshot** | High-fidelity parser to convert raw webpage accessibility trees to structured Markdown. Makes parsed web pages easy for agents to read and search. | **Use when** a webpage has been captured with the BrowserMCP `browser_snapshot` tool. Runs a Python parser to reconstruct structured representations of headings, tables, lists, and links. |
 | **Install Gemini Code Review Action** | Automated setup for Dazbo's Gemini-based PR Code Review & Issue Triage action. Streamlines setup and configures secure API credentials. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. Offers interactive credential setup using the GitHub CLI (`gh`). |
+| **Organise Agent Skills** | Standardised workflow for auditing, pruning, and organising agent skills in Antigravity/Gemini configuration repositories. Reduces context token overhead by ~50%+ through meta-skill delegation and on-demand activation rules. | **Use when** auditing installed skills, pruning token bloat, disabling sub-skills managed by meta-skills, or writing activation rules in `GEMINI.md` / `AGENTS.md`. |
 
 ### Installation Instructions
 
@@ -52,6 +53,7 @@ npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill conve
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill secrets-with-git-crypt
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill create-md-from-browsermcp-snapshot
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill install-gemini-code-review-action
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill organise-agent-skills
 ```
 
 Check my blog [Confused About Where to Put Your Agent Skills?](https://medium.com/google-cloud/confused-about-where-to-put-your-agent-skills-ea778f3c64f3) for more information on where you can put these skills.
@@ -82,7 +84,9 @@ dazbo-agent-skills/
 │   │   ├── SKILL.md                       # Main instruction file
 │   │   └── scripts/                       # Reusable Python parsing script
 │   │       └── parse_snapshot.py
-│   └── install-gemini-code-review-action/ # Installs PR code review & issue triage action
+│   ├── install-gemini-code-review-action/ # Installs PR code review & issue triage action
+│   │   └── SKILL.md                       # Main instruction file
+│   └── organise-agent-skills/             # Audits, prunes, and manages skill token overhead
 │       └── SKILL.md                       # Main instruction file
 └── README.md                              # This storefront
 ```
