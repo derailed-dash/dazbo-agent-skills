@@ -114,6 +114,7 @@ Whenever disabling a specialised or niche domain skill in `skills.json` (skills 
 
 
 ### Portability Notes
+
 - `skills.json` is the native exclusion mechanism for **Antigravity** environments.
 - For other agent frameworks (e.g. Claude Code, Cursor, Windsurf), skill exclusion is managed via workspace `.agents/` boundaries or tool configuration files. Disabling via meta-skills and on-demand file reading remains 100% portable across all LLM agents.
 
