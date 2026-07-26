@@ -95,8 +95,6 @@ Whenever disabling a specialised or niche domain skill in `skills.json` (skills 
 ### Antigravity `skills.json` Syntax
 
 - **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
-### Antigravity `skills.json` Syntax
-- **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
 - **Disabled Skill**: Plain string in `exclude` array (e.g. `"alloydb-basics"`).
 - **Enabled Skill**: `//` prefix in `exclude` array (e.g. `"//bigquery-sql"`). The `//` breaks exact string match, causing the loader to treat the skill as active.
 
@@ -111,7 +109,6 @@ Whenever disabling a specialised or niche domain skill in `skills.json` (skills 
   ]
 }
 ```
-
 
 ### Portability Notes
 
