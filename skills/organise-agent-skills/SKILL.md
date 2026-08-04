@@ -1,9 +1,10 @@
 ---
 name: organise-agent-skills
-description: Standardised workflow for auditing, pruning, and organising agent skills in agentic development environments, such as Antigravity. Use when reviewing installed skills, pruning token overhead, disabling sub-skills managed by meta-skills, or adding on-demand activation rules to GEMINI.md or AGENTS.md.
+description: |
+  Standardised workflow for auditing, pruning, and organising agent skills in agentic development environments, such as Antigravity. Use when reviewing installed skills, pruning token overhead, disabling sub-skills managed by meta-skills, or adding on-demand activation rules to GEMINI.md or AGENTS.md.
 metadata:
   author: Darren "Dazbo" Lester
-  version: "1.0.0"
+  repository: https://github.com/derailed-dash/dazbo-agent-skills
 ---
 
 # Organising Agent Skills
@@ -38,15 +39,15 @@ When an agent turn starts, the `name` and `description` of **every active skill*
 
 1. **Count Skills**:
    - Total skills on disk in `~/.gemini/config/skills/`.
-   - Active skills (enabled in `skills.json`).
-   - Inactive skills (excluded in `skills.json`).
+   - Inactive skills (excluded in `skills.json`). For example, skills listed in the `exclude` array without the `//` prefix.
+   - Active skills (enabled in `skills.json`). For example, skills starting with `//` in the `exclude` array.
 
 2. **Measure Prompt Footprint**:
    - Sum word/token count of descriptions across all active skills.
 
 3. **Identify Legacy & Duplicates**:
    - Check for byte-for-byte duplicate skills or deprecated SDK guides.
-   - Delete obsolete skill directories from disk.
+   - Propose removal of obsolete skill directories from disk.
 
 ---
 
@@ -88,7 +89,6 @@ Whenever disabling a specialised or niche domain skill in `skills.json` (skills 
    *Examples*:
    - **GCS Security Assessment** (`gcs-security-assessment`): Activate whenever auditing bucket access controls, storage security posture, or SAIF compliance.
    - **NotebookLM Auth** (`notebooklm-auth`): Activate whenever diagnosing or resolving NotebookLM MCP cookie or authentication errors.
-
 
 ---
 

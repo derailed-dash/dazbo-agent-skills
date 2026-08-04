@@ -1,8 +1,12 @@
 ---
 name: install-gemini-code-review-action
-description: Installs or upgrades Dazbo's PR code review & issue triage GitHub action. Use when a user wants to set up or update automated AI code reviews or issue triaging for their GitHub repository.
+description: |
+  Installs, configures, or upgrades Dazbo's PR code review & issue triage GitHub Action (gemini-review-action) in a target repository. Use when the user wants to set up, configure, or update automated AI code reviews, issue triaging, or Gemini model workflows for their GitHub repository.
 metadata:
   author: Darren "Dazbo" Lester
+  repository: https://github.com/derailed-dash/dazbo-agent-skills
+  cli:
+    - gh
 ---
 
 # Installing & Upgrading Gemini PR Review & Issue Triage Action
@@ -38,17 +42,19 @@ Installation Progress:
 - [ ] Step 5: Git commit and push changes
 ```
 
-### Step 1: Detect existing implementations and legacy workflows
+### Step 1: Pre-implementation environment check & legacy workflow detection
+
+Before writing or modifying any GitHub workflow files:
 
 Inspect the `.github/workflows/` directory for existing workflow files:
 
-1. **Check for existing `gemini-review-action` workflows**:
+2. **Check for existing `gemini-review-action` workflows**:
    - Inspect `.github/workflows/gemini-review.yml` or `.github/workflows/gemini-triage.yml`.
    - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.5-flash`, `gemini-2.5-flash`, or `gemini-1.5-flash`), inform the user and **offer to upgrade the model to `gemini-3.6-flash`**.
    - Check if a `persona` input is specified. If missing or set to `straight`, **offer to add one of the custom reviewer personalities** (such as Dazbo or Palpatine).
    - Check if `include_comment_history` is enabled (default is `true` in latest versions).
 
-2. **Check for legacy/competing workflows**:
+3. **Check for legacy/competing workflows**:
    - Search for references to deprecated actions like `google-gemini/run-gemini-cli`, `google-github-actions/run-gemini-cli`, or `google-github-actions/gemini-code-assist`.
    - If found, warn the user that legacy workflows will conflict with the new action and ask for permission to remove them.
 
@@ -68,7 +74,7 @@ Ask the user:
 3. **Reviewer Personality / Persona**:
    Provide a clear summary of the available character personas to the user so they can choose their preferred tone:
    - **`straight`** (Default): Standard, professional, and direct technical code reviewer without character overlays.
-   - **`dazbo`**: Practical, warm, and mildly cheeky software engineer personality. Uses approachable wit, avoids dry corporate boilerplate, and displays escalating dry sarcasm/humour if prior review recommendations are ignored without explanation in follow-up commits.
+   - **`dazbo`**: Practical, warm, and mildly cheeky software engineer personality. Uses approachable humour, avoids dry corporate boilerplate, and displays escalating dry sarcasm/humour if prior review recommendations are ignored without explanation in follow-up commits.
    - **`palpatine`**: Emperor Palpatine (Darth Sidious) from Star Wars. Ominous, imperial, dramatic, demanding absolute perfection ("Do it.", "Good, good...", "Unlimited power!", "Execute Order 66 on this bug"), with escalating imperial wrath for unaddressed flaws.
 
 4. **Additional Customisation Options**:
@@ -128,7 +134,7 @@ The action supports three distinct reviewer personas configured via the `persona
 | Persona | Key Tone & Style | Behavior on Repeated / Unaddressed Issues |
 | :--- | :--- | :--- |
 | **`straight`** | Direct, professional, objective technical feedback. | Restates technical rationale clearly. |
-| **`dazbo`** | Warm, practical, mildly cheeky software engineer with approachable wit. | Escalating dry humor and witty sarcasm (e.g. *"I see we've chosen to bypass that suggestion again... bold strategy!"*). |
+| **`dazbo`** | Warm, practical, mildly cheeky software engineer with approachable humour. | Escalating dry humor and witty sarcasm (e.g. *"I see we've chosen to bypass that suggestion again... bold strategy!"*). |
 | **`palpatine`** | Ominous, grand, imperial, theatrical (Emperor Palpatine). | Imperial wrath and dark side displeasure (e.g. *"I find your lack of compliance disturbing..."*). |
 
 ## Workflow Templates

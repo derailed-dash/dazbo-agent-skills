@@ -1,8 +1,12 @@
 ---
 name: secrets-with-git-crypt
-description: Use when managing encryption and decryption of secrets (like .env or *.tfvars) using git-crypt. Helps install git-crypt, initialize/unlock repositories, and maintain parallel unencrypted/encrypted file copies securely.
+description: |
+  Manages encryption and decryption of repository secrets (such as .env or *.tfvars) using git-crypt, keeping credentials secure with parallel encrypted files. Use when managing secrets, setting up git-crypt, or encrypting/decrypting environment files.
 metadata:
   author: Darren "Dazbo" Lester
+  repository: https://github.com/derailed-dash/dazbo-agent-skills
+  cli:
+    - git-crypt
 ---
 
 # Secrets Management with Git-Crypt
@@ -49,16 +53,23 @@ Secrets Management Progress:
 - [ ] Step 5: Verify environment security
 ```
 
-**Step 1: Verify git-crypt installation**
+**Step 1: Pre-implementation safety & binary verification**
 
-Run the status command of the helper script to check if git-crypt is available on the system:
-```bash
-./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh status
-```
-If it is not installed, run the installation helper command:
-```bash
-./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh install
-```
+Before attempting any encryption, decryption, or secret sync operations:
+
+1. **Verify Git Work Tree**:
+   - Confirm working directory is inside a Git repository (`git rev-parse --is-inside-work-tree`). If not in a Git repository, halt execution and prompt the user to run `git init` first.
+
+2. **Verify git-crypt Binary & Helper Script**:
+   - Ensure the helper script at `skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh` is executable (`chmod +x`).
+   - Run the status command of the helper script to check if `git-crypt` is installed and functioning:
+     ```bash
+     ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh status
+     ```
+   - If `git-crypt` is missing, offer to install it via:
+     ```bash
+     ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh install
+     ```
 
 **Step 2: Initialize or unlock the repository**
 

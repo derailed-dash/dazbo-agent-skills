@@ -1,13 +1,21 @@
 ---
 name: deploy-skills-in-antigravity
-description: Downloads, installs, and relocates new agent skills to the global Antigravity shared directory (`~/.gemini/skills/`) to make them available across all tools. Use when the user requests to download, install, import, or update new agent skills.
+description: |
+  Downloads, installs, and relocates new agent skills to the global Antigravity shared directory (`~/.gemini/config/skills/`) to make them available across all tools. Use when the user requests to download, install, import, setup, or update new agent skills, or asks to relocate installed skills.
 metadata:
   author: Darren "Dazbo" Lester
+  repository: https://github.com/derailed-dash/dazbo-agent-skills
+  skills:
+    - find-skills
+  cli:
+    - npx
 ---
 
 # Deploying Skills in Antigravity
 
-This skill provides a structured workflow for downloading, installing, and relocating new agent skills. It automates the installation process via `npx` and ensures that all downloaded skills are cleanly migrated to the global/shared location so they are instantly accessible to all Google Antigravity tools.
+This skill provides a structured workflow for downloading, installing, and relocating new agent skills. It first checks for the availability of the `find-skills` skill to handle skill discovery, installation, or upgrades. If `find-skills` is unavailable, it falls back to direct CLI installation commands.
+
+After installation or upgrade, if operating within an Antigravity environment (where `~/.gemini` exists), it prompts the user to confirm whether they want the skills relocated to `~/.gemini/config/skills/` so they become available across all Antigravity tools.
 
 ## Table of Contents
 
@@ -29,7 +37,7 @@ This skill MUST trigger whenever:
 ## Prerequisites
 
 - **Node.js**: The system must have `npx` available to run the `skills` tool.
-- **Access Permissions**: Ensure you have directory write permissions for `~/.agents/skills/` and the global (Agy) shared directory `~/.gemini/skills/`.
+- **Access Permissions**: Ensure you have directory write permissions for `~/.agents/skills/` and, if relocating, `~/.gemini/config/skills/`.
 
 ## Installation and Relocation Workflow
 
@@ -37,32 +45,53 @@ Copy this checklist and track your progress:
 
 ```
 Skill Deployment Progress:
-- [ ] Step 1: Parse the user's installation request
-- [ ] Step 2: Run the installation command
-- [ ] Step 3: Relocate the skills to the shared global directory
-- [ ] Step 4: Verify that files are correctly positioned
+- [ ] Step 1: Check for `find-skills` availability
+- [ ] Step 2: Install or upgrade skills
+- [ ] Step 3: Check for Antigravity environment and prompt user for relocation
+- [ ] Step 4: Relocate skills (if confirmed)
+- [ ] Step 5: Verify that files are correctly positioned
 ```
 
-**Step 1: Parse the user's installation request**
+**Step 1: Check for `find-skills` availability**
 
-Identify the target repository URL and optional flags such as `--skill` or specific branch/commit references.
-Common patterns:
-- Repository installation: `npx skills add https://github.com/username/repo-name -y -g`
-- Specific skill installation: `npx skills add https://github.com/username/repo-name -y -g --skill skill-name`
+Before initiating an installation or upgrade:
+- Check if the `find-skills` skill is available in your active agent skills context.
+- If `find-skills` is present, use it for discovering, installing, or upgrading skills in Step 2.
+- If `find-skills` is NOT present, proceed to Step 2 using the direct CLI fallback commands detailed in this skill.
 
-**Step 2: Run the installation command**
+**Step 2: Install or upgrade skills**
 
-Propose and execute the installation command using the `run_command` tool.
-If the command fails due to permission errors, request appropriate permissions before retrying.
+Depending on `find-skills` availability:
 
-**Step 3: Relocate the skills to the shared global directory**
+- **When `find-skills` IS available:**
+  - Delegate skill search, selection, installation, or updates to `find-skills`.
+  - For new skill installation: execute `npx skills add <package> -g -y` (or specific repository URL/branch flags).
+  - For skill upgrades: execute `npx skills update -g -y` (or `npx skills check`).
+- **When `find-skills` is NOT available:**
+  - Parse the user's request to identify the target repository URL, skill name, or branch.
+  - Execute direct CLI commands using `run_command`:
+    - Repository installation: `npx skills add https://github.com/username/repo-name -y -g`
+    - Specific skill installation: `npx skills add https://github.com/username/repo-name -y -g --skill skill-name`
+    - Skill upgrade: `npx skills update -g -y`
 
-Once installed, the skills reside in `~/.agents/skills/`. To make them available to all Google Antigravity tools, relocate them to `~/.gemini/skills/`.
-Use the appropriate OS-specific relocation command based on the host operating system.
+**Step 3: Check for Antigravity environment and prompt user for relocation**
 
-**Step 4: Verify that files are correctly positioned**
+Default skill installation via `npx skills` places files into `~/.agents/skills/`.
+Before relocating files:
+1. **Check if `~/.gemini` exists**: Verify if the target environment is Antigravity by checking for the existence of `~/.gemini` (e.g. `[ -d "$HOME/.gemini" ]` on Linux/macOS or `Test-Path "$HOME\.gemini"` on Windows).
+   - If `~/.gemini` does **not** exist, skip relocation. Installed skills will remain in `~/.agents/skills/`.
+2. **Prompt the User**: If `~/.gemini` **does** exist, explicitly ask the user whether they want the newly installed/updated skills relocated to `~/.gemini/config/skills/` to make them available across all Antigravity tools.
+   - If the user confirms: proceed to Step 4 to perform the relocation.
+   - If the user declines: leave the skills in `~/.agents/skills/`.
 
-Perform the comprehensive checks outlined in the [Verification Loop](#verification-loop) to ensure the skill is fully functional and registered.
+**Step 4: Relocate skills (if confirmed)**
+
+If the user confirmed relocation and `~/.gemini` exists:
+- Use the OS-specific relocation command detailed in the [OS-Specific Relocation Commands](#os-specific-relocation-commands) section to move skills from `~/.agents/skills/` to `~/.gemini/config/skills/`.
+
+**Step 5: Verify that files are correctly positioned**
+
+Perform the checks outlined in the [Verification Loop](#verification-loop) to ensure the skill is functional and correctly placed.
 
 ## OS-Specific Relocation Commands
 
@@ -70,10 +99,10 @@ Depending on the operating system, execute the appropriate shell command or scri
 
 ### Linux & macOS (Bash/Zsh)
 
-Run this clean replacement script. It removes any existing versions in `~/.gemini/skills/` before moving the newly installed versions:
+Run this clean replacement script. It removes any existing versions in `~/.gemini/config/skills/` before moving the newly installed versions:
 
 ```bash
-mkdir -p "$HOME/.gemini/skills/" && [ -d "$HOME/.agents/skills" ] && for d in "$HOME/.agents/skills"/*/; do [ -d "$d" ] && rm -rf "$HOME/.gemini/skills/$(basename "$d")" && mv "$d" "$HOME/.gemini/skills/"; done
+mkdir -p "$HOME/.gemini/config/skills/" && [ -d "$HOME/.agents/skills" ] && for d in "$HOME/.agents/skills"/*/; do [ -d "$d" ] && rm -rf "$HOME/.gemini/config/skills/$(basename "$d")" && mv "$d" "$HOME/.gemini/config/skills/"; done
 ```
 
 ### Windows (PowerShell)
@@ -82,7 +111,7 @@ If operating on a Windows host environment, run the following PowerShell command
 
 ```powershell
 $sourceDir = "$HOME\.agents\skills"
-$destDir = "$HOME\.gemini\skills"
+$destDir = "$HOME\.gemini\config\skills"
 if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force }
 Get-ChildItem -Path $sourceDir -Directory | ForEach-Object {
     $target = Join-Path $destDir $_.Name
@@ -96,22 +125,22 @@ Get-ChildItem -Path $sourceDir -Directory | ForEach-Object {
 Before completing the task, the agent MUST run the following verification sequence:
 
 ### 1. Folder Existence and Relocation Verification
-Confirm the skill directory has been successfully moved to the global shared path:
-- **Linux/macOS:** `ls -la ~/.gemini/skills/`
-- **Windows:** `Get-ChildItem "$HOME\.gemini\skills"`
+Confirm the skill directory path (either `~/.gemini/config/skills/` if relocated, or `~/.agents/skills/` if not):
+- **Linux/macOS:** `ls -la ~/.gemini/config/skills/` (or `ls -la ~/.agents/skills/`)
+- **Windows:** `Get-ChildItem "$HOME\.gemini\config\skills"` (or `Get-ChildItem "$HOME\.agents\skills"`)
 
 ### 2. Frontmatter & Integrity Check
 Verify that the `SKILL.md` file exists in the target directory and has a valid YAML frontmatter block:
-- **Command:** Read the first 10 lines of the relocated `SKILL.md` and confirm it starts with `---` and contains valid `name` and `description` keys.
+- **Command:** Read the first 10 lines of `SKILL.md` and confirm it starts with `---` and contains valid `name` and `description` keys.
 
 ### 3. Subdirectory Validation
 For complex skills, ensure that nested folders (such as `references/`, `evals/`, or `scripts/`) are present and populated:
 - **Command:** Verify that critical folders are present and not empty.
 
 ### 4. Global Registry Check
-Confirm the Skills CLI successfully registers and lists the newly relocated skill:
+Confirm the Skills CLI successfully registers and lists the skill:
 - **Command:** `npx skills ls -g` (or `npx skills ls -g --json`)
-- **Success Criteria:** The output must list the relocated skill name alongside its absolute global path.
+- **Success Criteria:** The output must list the skill name alongside its absolute path.
 
 ### 5. Permission & Readability Check
-Ensure that the relocated skill files are readable by the active shell process to prevent loader failures during execution.
+Ensure that the skill files are readable by the active shell process to prevent loader failures during execution.
