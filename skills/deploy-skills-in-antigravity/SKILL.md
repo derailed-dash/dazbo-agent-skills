@@ -102,10 +102,10 @@ Perform the checks outlined in the [Verification Loop](#verification-loop) to en
 If operating in an Antigravity environment (`~/.gemini` exists) and skills were relocated to `~/.gemini/config/skills/`:
 1. Check if `~/.gemini/config/skills.json` exists.
 2. Read `skills.json` and check if the newly installed/updated skills are listed in the `exclude` array.
-105 | 3. For any newly relocated skill missing from `skills.json`:
-106 |     - Prompt the user or evaluate context to decide whether the skill should be enabled by default (`"//skill-name"`) or disabled (`"skill-name"`).
-107 |     - Insert the skill into the `exclude` array.
-   - Sort the `exclude` array alphabetically and write the updated `skills.json` back to disk.
+3. For any newly relocated skill missing from `skills.json`:
+    - Prompt the user or evaluate context to decide whether the skill should be enabled by default (`"//skill-name"`) or disabled (`"skill-name"`).
+    - Insert the skill into the `exclude` array.
+    - Sort the `exclude` array alphabetically and write the updated `skills.json` back to disk.
 
 ## OS-Specific Relocation Commands
 
