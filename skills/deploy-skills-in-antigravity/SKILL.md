@@ -50,6 +50,7 @@ Skill Deployment Progress:
 - [ ] Step 3: Check for Antigravity environment and prompt user for relocation
 - [ ] Step 4: Relocate skills (if confirmed)
 - [ ] Step 5: Verify that files are correctly positioned
+- [ ] Step 6: Sync & Register with `skills.json`
 ```
 
 **Step 1: Check for `find-skills` availability**
@@ -95,6 +96,16 @@ If the user confirmed relocation and `~/.gemini` exists:
 **Step 5: Verify that files are correctly positioned**
 
 Perform the checks outlined in the [Verification Loop](#verification-loop) to ensure the skill is functional and correctly placed.
+
+**Step 6: Sync & Register with `skills.json`**
+
+If operating in an Antigravity environment (`~/.gemini` exists) and skills were relocated to `~/.gemini/config/skills/`:
+1. Check if `~/.gemini/config/skills.json` exists.
+2. Read `skills.json` and check if the newly installed/updated skills are listed in the `exclude` array.
+3. For any newly relocated skill missing from `skills.json`:
+    - Prompt the user or evaluate context to decide whether the skill should be enabled by default (`"//skill-name"`) or disabled (`"skill-name"`).
+    - Insert the skill into the `exclude` array.
+    - Sort the `exclude` array alphabetically and write the updated `skills.json` back to disk.
 
 ## OS-Specific Relocation Commands
 
