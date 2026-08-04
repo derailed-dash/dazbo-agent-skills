@@ -76,6 +76,9 @@ Depending on `find-skills` availability:
 
 **Step 3: Check for Antigravity environment and prompt user for relocation**
 
+> [!IMPORTANT] MANDATORY USER CONFIRMATION GATE
+> You MUST STOP and ask the user using `ask_question` or a direct prompt before running any relocation script. Do NOT execute the relocation command until the user explicitly confirms.
+
 Default skill installation via `npx skills` places files into `~/.agents/skills/`.
 Before relocating files:
 1. **Check if `~/.gemini` exists**: Verify if the target environment is Antigravity by checking for the existence of `~/.gemini` (e.g. `[ -d "$HOME/.gemini" ]` on Linux/macOS or `Test-Path "$HOME\.gemini"` on Windows).
