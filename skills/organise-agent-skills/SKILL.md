@@ -37,10 +37,14 @@ When an agent turn starts, the `name` and `description` of **every active skill*
 
 ## Workflow Phase 1: Audit & Discovery
 
-1. **Count Skills**:
-   - Total skills on disk in `~/.gemini/config/skills/`.
-   - Inactive skills (excluded in `skills.json`). For example, skills listed in the `exclude` array without the `//` prefix.
-   - Active skills (enabled in `skills.json`). For example, skills starting with `//` in the `exclude` array.
+1. **Filesystem Auto-Discovery & Inventory Audit**:
+   - List all skill directories present on disk under `~/.gemini/config/skills/` (and `.agents/skills/` if in a workspace).
+   - Read `skills.json` (`~/.gemini/config/skills.json`) and compare disk directories against entries in the `exclude` array.
+   - **Identify Discrepancies**:
+     - **Newly Discovered Skills**: Skill folders present on disk but missing from `skills.json`.
+     - **Orphaned Entries**: Entries in `skills.json` (with or without `//`) whose directory no longer exists on disk.
+     - **Inactive Skills**: Skills listed in `skills.json` without the `//` string prefix (disabled/excluded).
+     - **Active Skills**: Skills listed in `skills.json` with the `//` string prefix (enabled/active).
 
 2. **Measure Prompt Footprint**:
    - Sum word/token count of descriptions across all active skills.
@@ -92,11 +96,22 @@ Whenever disabling a specialised or niche domain skill in `skills.json` (skills 
 
 ---
 
-### Antigravity `skills.json` Syntax
+## Workflow Phase 4: Portability & `skills.json` Full-Inventory Management
+
+To ensure maximum visibility and effortless toggling, `skills.json` is treated as an **explicit full inventory control panel** for all installed skills rather than a partial list of exclusions.
+
+### Antigravity `skills.json` Mechanics
 
 - **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
-- **Disabled Skill**: Plain string in `exclude` array (e.g. `"alloydb-basics"`).
-- **Enabled Skill**: `//` prefix in `exclude` array (e.g. `"//bigquery-sql"`). The `//` breaks exact string match, causing the loader to treat the skill as active.
+- **Disabled Skill**: Plain string in `exclude` array (e.g. `"alloydb-basics"`). Exact match evaluates to `true`, excluding the skill.
+- **Enabled Skill**: `//` prefix in `exclude` array (e.g. `"//bigquery-sql"`). The `//` prefix breaks exact string match (`exclude.includes("bigquery-sql")` evaluates to `false`), causing the loader to treat the skill as active.
+
+### Reconciliation & Auto-Sync Procedure
+
+When executing `organise-agent-skills`:
+1. **Auto-Register Missing Skills**: Add any skill folder found on disk that is absent from `skills.json`. Default newly registered skills to enabled (`"//skill-name"`) or disabled (`"skill-name"`) based on user preference or token budget strategy.
+2. **Prune Orphaned Entries**: Remove entries from `skills.json` whose corresponding directory on disk no longer exists.
+3. **Sort Alphabetically**: Maintain the `exclude` array sorted in alphabetical order so that scanning and diffing remain clean and predictable.
 
 #### Example `skills.json`:
 ```json
