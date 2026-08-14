@@ -26,7 +26,7 @@ This skill provides a structured workflow for installing, configuring, and upgra
 This skill MUST trigger whenever:
 - The user requests to install, configure, or upgrade `gemini-review-action` or a Gemini-based PR code review workflow.
 - The user asks for automated code reviews or issue triaging on GitHub.
-- The user asks to upgrade model versions in existing review workflows (e.g. from `gemini-3.5-flash` to `gemini-3.6-flash`).
+- The user asks to upgrade model versions in existing review workflows (e.g. from `gemini-3.5-flash` to `gemini-3.7-flash`).
 - The user asks to add custom reviewer personalities (such as Dazbo or Emperor Palpatine) to their automated PR reviews.
 
 ## Installation & Upgrade Workflow
@@ -50,7 +50,7 @@ Inspect the `.github/workflows/` directory for existing workflow files:
 
 2. **Check for existing `gemini-review-action` workflows**:
    - Inspect `.github/workflows/gemini-review.yml` or `.github/workflows/gemini-triage.yml`.
-   - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.5-flash`, `gemini-2.5-flash`, or `gemini-1.5-flash`), inform the user and **offer to upgrade the model to `gemini-3.6-flash`**.
+   - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.6-flash`, `gemini-2.5-flash`, or `gemini-1.5-flash`), inform the user and **offer to upgrade the model to `gemini-3.7-flash`**.
    - Check if a `persona` input is specified. If missing or set to `straight`, **offer to add one of the custom reviewer personalities** (such as Dazbo or Palpatine).
    - Check if `include_comment_history` is enabled (default is `true` in latest versions).
 
@@ -68,7 +68,7 @@ Ask the user:
    - **Both** (recommended)
 
 2. **Gemini Model**:
-   - **`gemini-3.6-flash`** (Default & recommended — fast, cost-efficient, native structured JSON output, context caching support).
+   - **`gemini-3.7-flash`** (Default & recommended — fast, cost-efficient, native structured JSON output, context caching support).
    - Offer model upgrade if an older model was detected in Step 1.
 
 3. **Reviewer Personality / Persona**:
@@ -88,7 +88,7 @@ Ask the user:
 Create or update workflow files in `.github/workflows/` incorporating all chosen preferences from Step 2.
 
 Ensure the workflow specifies:
-- `gemini_model: 'gemini-3.6-flash'`
+- `gemini_model: 'gemini-3.7-flash'`
 - `persona: '<chosen_persona>'` (e.g. `straight`, `dazbo`, or `palpatine`)
 - `language: '<chosen_language>'` (e.g. `English (UK)`)
 - `include_comment_history: 'true'`
@@ -184,7 +184,7 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.6-flash'
+          gemini_model: 'gemini-3.7-flash'
           persona: 'straight' # Options: straight, dazbo, palpatine
           language: 'English (UK)'
           include_comment_history: 'true'
@@ -214,7 +214,7 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.6-flash'
+          gemini_model: 'gemini-3.7-flash'
           command: 'triage'
 ```
 
