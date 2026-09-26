@@ -21,5 +21,5 @@ jobs:
           command: 'triage'
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.6-flash'
+          gemini_model: 'gemini-3.8-flash'
           language: 'English (UK)'

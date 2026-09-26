@@ -48,23 +48,44 @@ Skills operate under three explicit states within agentic development environmen
 
 ## Workflow Phase 1: Audit & Discovery
 
-1. **Filesystem Auto-Discovery & Inventory Audit**:
-   - List all skill directories present on disk under `~/.gemini/config/skills/` (and `.agents/skills/` if in a workspace).
-   - Read `skills.json` (`~/.gemini/config/skills.json`) and compare disk directories against entries in the `exclude` array.
+1. **Filesystem Auto-Discovery & Full Inventory Audit**:
+   - **Standalone Skills**: List all skill directories present on disk under `~/.gemini/config/skills/` (and `.agents/skills/` if in a workspace).
+   - **Packaged Plugin Skills**: Inspect all bundled skills inside `~/.gemini/config/plugins/*/skills/`. (Packaged plugin skills that are unlisted in `skills.json` are treated by Antigravity as discoverable by default and contribute silently to prompt overhead).
+   - Read `skills.json` (`~/.gemini/config/skills.json`) and compare all disk directories against entries in the `exclude` array.
    - **Identify Discrepancies**:
-     - **Newly Discovered Skills**: Skill folders present on disk but missing from `skills.json`.
+     - **Newly Discovered Skills**: Standalone skill folders present on disk but missing from `skills.json`.
+     - **Unlisted Plugin Skills**: Plugin skills present on disk but absent from `skills.json`.
      - **Orphaned Entries**: Entries in `skills.json` (with or without `//`) whose directory no longer exists on disk.
      - **Installed and Excluded Skills**: Skills listed in `skills.json` without the `//` string prefix.
      - **Installed and Inactive (Discoverable) Skills**: Skills listed in `skills.json` with the `//` string prefix.
 
 2. **Measure Prompt Footprint**:
-   - Sum word/token count of descriptions across all active skills.
+   - Sum word/token count of descriptions across all active discoverable skills (including unlisted plugin skills).
+   - Check if total discoverable skills exceed the 30–50 skill sweet spot (~3,000–3,500 tokens), which triggers automatic skill dropping by Antigravity's context budget manager.
 
-3. **Mandatory Duplicate & Redundancy Audit**:
-   The agent MUST systematically inspect the skill inventory for duplicate, legacy, or redundant skills:
-   - **Byte-for-byte & Description Duplicates**: Search for skills with identical or near-identical descriptions/frontmatter (e.g. `gemini-agents-api` vs `gemini-managed-agents-api`, `gemini-live-api` vs `liveapi-service`).
-   - **Functional Overlaps**: Identify redundant skills where a newer or broader skill supersedes an older one.
-   - **Action**: Explicitly propose deleting redundant skill directories from disk in the Pre-Execution Proposal.
+3. **Mandatory Semantic & Functional Overlap Audit**:
+   The agent MUST systematically inspect the skill inventory for duplicate, legacy, or redundant skills. **Do NOT rely solely on literal folder names or string distance matching.**
+   
+   - **Semantic & Methodological Analysis**:
+     Parse the YAML frontmatter (`description`), primary headings, and operational directives of each skill. Look for shared software engineering methodologies or overlapping tools disguised by differing folder names.
+     *Example*: An extension plugin named `conductor` duplicates a standalone skill named `spec-driven-development` because both implement Spec-Driven Development (SDD) workflows.
+   
+   - **Functional Domain Clustering**:
+     Group skills into semantic domain clusters and flag clusters where multiple active skills compete or create routing collisions:
+     * **Gemini API & SDK**: e.g. `gemini-api` vs `gemini-api-dev` / `gemini-interactions-api`.
+     * **Spec-Driven Development & Planning**: e.g. `spec-driven-development` vs `conductor` / `planning-and-task-breakdown`.
+     * **Browser DevTools & Automation**: e.g. `chrome-devtools` vs `browser-testing-with-devtools` / `playwright-cli`.
+     * **Cloud Authentication**: e.g. `gcloud-auth-verification` vs `google-cloud-auth-verification`.
+     * **Workflow Orchestration**: e.g. `gcp-composer-troubleshooting` vs `managed-airflow-dag-troubleshooting`.
+     * **Data Platforms & Storage**: e.g. BigQuery, Spark, Dataproc, GCS.
+   
+   - **Packaged Plugin Supersession**:
+     Cross-reference standalone skills against official packaged extension plugins (`config/plugins/`). When an upstream plugin bundles skills covering a domain, the standalone copies are obsolete:
+     * Flag obsolete standalone skills for deletion from disk.
+     * Ensure deleted skills are pruned from `~/.agents/.skill-lock.json` so `npx skills update -g -y` does not re-download them.
+     * Ensure `.gitignore` contains regex patterns (`[-_]`) ignoring standalone versions of plugin skills.
+
+   - **Action**: Explicitly propose deleting redundant skill directories and disabling overlapping variants in the Pre-Execution Proposal.
 
 ---
 
