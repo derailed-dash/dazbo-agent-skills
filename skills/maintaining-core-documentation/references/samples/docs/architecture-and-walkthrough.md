@@ -208,87 +208,19 @@ The `content` collection (used for singleton pages like `about`) uses the follow
 
 The following diagram illustrates the relationship between the application's runtime components, the ingestion scripts, and the shared code modules.
 
-```mermaid
-graph TD
-    subgraph "Web Application Layer"
-        API["FastAPI App<br/>(app/fast_api_app.py)"]
-        Frontend["React UI<br/>(frontend/)"]
-        Agent["Gemini Agent<br/>(app/agent.py)"]
-        Dep["Dependencies<br/>(app/dependencies.py)"]
-        
-        Frontend -- "HTTP/JSON" --> API
-        API -- "Bootstraps" --> Agent
-        API -- "Injects Services" --> Dep
-        Agent -- "Called via /chat" --> API
-    end
+![Component Architecture](images/component-architecture.png)
 
-    subgraph "CLI / Scripts"
-        CLI["Ingest Tool<br/>(app/tools/ingest.py)"]
-    end
-
-    subgraph "Service Layer (Shared)"
-        direction TB
-        PS["ProjectService"]
-        BS["BlogService"]
-        ES["ExperienceService"]
-        CS["ContentService"]
-        FS["FirestoreService<br/>(Generic Base)"]
-        CES["ContentEnrichmentService<br/>(Gemini)"]
-        
-        PS --> FS
-        BS --> FS
-        ES --> FS
-        CS --> FS
-        CLI -.-> CES
-    end
-```
+*   **Web Application Layer**: The React UI (`frontend/`) communicates over HTTP/JSON with the FastAPI App (`app/fast_api_app.py`), which bootstraps the Gemini Agent (`app/agent.py`) and injects shared dependencies (`app/dependencies.py`).
+*   **CLI / Scripts Layer**: The Ingestion CLI (`app/tools/ingest.py`) triggers out-of-band content synchronisation and AI enrichment via `ContentEnrichmentService`.
+*   **Shared Service Layer**: Domain services (`ProjectService`, `BlogService`, `ExperienceService`, `ContentService`) inherit from the generic `FirestoreService` base class.
 
 ### Runtime & Deployment Architecture
 
-```mermaid
-graph TD
-    subgraph "Google Cloud Platform"
-        subgraph "Cloud Run Service"
-            Container["Unified Container"]
-            Env["Env Vars<br/>(Settings)"]
-            
-            subgraph "Process"
-                Uvicorn["Uvicorn Server"]
-                FastAPI["FastAPI App"]
-                Static["Static Files<br/>(React Build)"]
-            end
-            
-            Container --> Uvicorn
-            Uvicorn --> FastAPI
-            FastAPI -- "Serves /assets" --> Static
-            FastAPI -- "Handles /api" --> Logic["Business Logic"]
-        end
-        
-        subgraph "Managed Services"
-            FS[("Firestore")]
-            GCS[("Cloud Storage")]
-            LOG[("Cloud Logging")]
-            MCP["Firestore MCP Server<br/>(Managed)"]
-        end
+![Runtime and Deployment Architecture](images/runtime-deployment-architecture.png)
 
-        Logic --> FS
-        Logic --> GCS
-        FastAPI -.-> LOG
-        Agent -- "MCP/SSE" --> MCP
-        MCP -- "gRPC" --> FS
-    end
-
-    subgraph "Deployment Pipeline"
-        TF["Terraform<br/>(Infrastructure)"]
-        CB["Cloud Build<br/>(CI/CD)"]
-        
-        TF -- "Provisions" --> Service["Cloud Run Service Resource"]
-        TF -- "Configures" --> IAM["IAM Permissions"]
-        
-        CB -- "Builds" --> Image["Docker Image"]
-        CB -- "Deploys" --> Service
-    end
-```
+*   **Cloud Run Service**: A unified container running Uvicorn and FastAPI serves both static React build assets (`/assets`) and backend business logic (`/api`).
+*   **Managed Google Cloud Services**: Business logic persists data to Firestore and Cloud Storage, streams telemetry to Cloud Logging, and connects the ADK Agent to Firestore via the managed Firestore MCP Server.
+*   **Deployment Pipeline**: Terraform provisions the Cloud Run service and IAM bindings, whilst Cloud Build builds the container image and deploys new revisions.
 
 ### Module & Service Relationships
 

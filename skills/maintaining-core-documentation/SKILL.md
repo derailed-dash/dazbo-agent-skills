@@ -155,6 +155,9 @@ Here are the core documents that should be maintained by this skill. You MUST re
 - **Headings**: There MUST be a blank line after every markdown header (e.g., `# Header\n\nContent`). This ensures consistent rendering across all Markdown viewers.
 - **Tables**: Always use tables for configurations, model fields, and design decisions to improve readability.
 - **Code blocks**: All code MUST be wrapped in fenced code blocks with appropriate language identifiers.
+- **Diagrams (NEVER Use Mermaid or ASCII)**:
+  - **NEVER** create, insert, or output text-based `mermaid` code blocks (` ```mermaid `) or ASCII/Unicode box-drawing diagrams in any documentation file (`README.md`, `ARCHITECTURE.md`, `docs/*.md`).
+  - Whenever a visual diagram (architecture, component relationships, sequence, deployment flow) is needed, **ALWAYS** generate a PNG image using image generation tools, save it to the repository (e.g. `media/` or `docs/images/`), and embed it via a relative Markdown link (`![Diagram Caption](media/diagram.png)`).
 
 ## Documentation Review Process
 
@@ -167,7 +170,7 @@ Documentation Update Progress:
 - [ ] Step 2: Verify that NO out-of-scope files (e.g. `workflow.md`, `code_styleguides/`) are included in the review.
 - [ ] Step 3: Assess if the change introduces a new "Design Decision" that should be recorded in `docs/architecture-and-walkthrough.md`.
 - [ ] Step 4: For all identified core documents, draft updates as per Document Maintenance Guide, and using the appropriate templates in the `./references` directory and using the samples in `./references/samples/`.
-- [ ] Step 5: **Structural Validation**: Perform a manual or automated check (e.g. using `grep`) to ensure every markdown header is followed by a blank line.
+- [ ] Step 5: **Structural & Diagram Validation**: Perform a manual or automated check (e.g. using `grep`) to ensure every markdown header is followed by a blank line and that NO `mermaid` blocks or ASCII diagrams were introduced.
 - [ ] Step 6: Review against the formatting rules in the [Formatting Rules](#formatting-rules) section.
 - [ ] Step 7: Check that the identified core documents have been updated. If any changes have been missed or performed incorrectly, go back to Step 2 and repeat.
 - [ ] Step 8: Check that the change aligns to the formatting rules. If not, fix them and go back to Step 6.
