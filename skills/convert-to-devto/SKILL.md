@@ -47,6 +47,7 @@ Apply the following rules to the supplied content:
     E.g. `code\_styleguides` should be `code_styleguides`.
     E.g. \*\*Summarize Files\*\* -> **Summarize Files**.
     E.g. **file\_reader\_agent** should be **file_reader_agent**.
+    - **Dollar signs (`\$` -> `$`)**: DEV.to's underlying `Redcarpet` Markdown parser does NOT treat `$` as an escapable Markdown character (unlike KaTeX/LaTeX environments). Writing `\$0.02` in prose renders literally with the backslash (`\$0.02`). Strip all `\$` escapes in prose so currency amounts appear cleanly as `$0.02`.
 7.  **Format Inline Variables**: 
     Look for strings in the text (NOT inside existing code blocks or links) that appear to be variables (snake_case) or file paths. 
     Wrap them in single backticks so they render as inline code.
@@ -85,10 +86,29 @@ Apply the following rules to the supplied content:
     Subsequently, all top-level headings in the md content should be H2 (##). Ensure that sub-headings are at the appropriate level. 
     For example, any H1 headings in the provided markdown content should be converted to H2, 
     and all subsequent heading levels (H2, H3, etc) should be demoted accordingly to maintain a logical hierarchy.
-13. **Liquid/Jekyll Escaping & Code Block Delimiters**:
+13. **Liquid/Jekyll Escaping, Backticks, & Forem's `CODE_BLOCKS_REGEX` Parser**:
     - **Do NOT use `{% raw %}` or `{% endraw %}` tags** around or inside code blocks. DEV.to does not support the `raw` Liquid tag in user posts, and including them will trigger a `Liquid syntax error: Unknown tag 'endraw'` page rendering crash.
-    - Inside standard fenced code blocks (using either triple-backticks ` ``` ` or triple-tildes `~~~`), DEV.to natively disables Liquid compilation. Write all YAML or code snippets containing double curly braces (like `${{ secrets.GEMINI_API_KEY }}`) exactly as-is, without any escaping.
-    - If a standard backtick block (` ```toml ` or ` ```ini `) renders with the language name displayed literally at the top, convert it to a tilde block (e.g. `~~~toml` or `~~~~toml`) to bypass the highlighting parser glitch.
+    - Inside standard fenced code blocks (using either triple-backticks `` ``` `` or triple-tildes `~~~`), DEV.to natively disables Liquid compilation. Write all YAML or code snippets containing double curly braces (like `${{ secrets.GEMINI_API_KEY }}`) exactly as-is, without any escaping.
+    - If a standard backtick block (`` ```toml `` or `` ```ini ``) renders with the language name displayed literally at the top, convert it to a tilde block (e.g. `~~~toml` or `~~~~toml`) to bypass the highlighting parser glitch.
+    - **CRITICAL — Never Put Multiple Backticks Inside Inline Code Spans (Forem `CODE_BLOCKS_REGEX` Bug)**:
+      Before passing Markdown to `Redcarpet::Markdown`, Forem's [`MarkdownProcessor::Parser`](https://github.com/forem/forem/blob/main/app/services/markdown_processor/parser.rb) pre-processes all code spans and fenced code blocks using a lazy multiline regex:
+      ```ruby
+      # From forem/app/services/markdown_processor/parser.rb:
+      CODE_BLOCKS_REGEX = /(~{3}|`{3}|`{2}|`)[\s\S]*?\1/
+
+      def escape_liquid_tags_in_codeblock(code_tag_content)
+        code_tag_content.gsub(CODE_BLOCKS_REGEX) do |code|
+          "{% raw %}#{code}{% endraw %}"
+        end
+      end
+      ```
+      Because `CODE_BLOCKS_REGEX` only has branches for `~{3}`, `` `{3} ``, `` `{2} ``, and `` ` `` (with **no ` `{4} ` branch** and `[\s\S]*?` matching across newlines!), any inline code span containing triple backticks or an uneven/mismatched backtick sequence will corrupt the entire rest of the article:
+      - **Failure Example**: Writing `` ` ```suggestion ` `` (5 backticks: `1 + 3 + 1`) causes `CODE_BLOCKS_REGEX` to match the 1st backtick with the first backtick of `` ``` `` (`1` to `1`). Then, the remaining two backticks (`` `` ``) open a **2-backtick (` `{2} `) multiline match** that completely ignores the single closing backtick after `suggestion` and scans dozens of lines down the page until it consumes the first two backticks of your next `` ```yaml `` fenced code block!
+      - **Symptom on DEV.to**: Every subsequent fenced code block in the post breaks — rendering `` ```yaml `` as a stray backtick, an empty grey code pill, and plain text (`` ` [  ] yaml ``) followed by unformatted YAML/bash code leaking into paragraph text.
+      - **Mandatory Fix**:
+        1. **NEVER** write triple backticks inside an inline code span (never write `` ` ```suggestion ` ``, `` `` ```suggestion `` ``, or ```` ```` ```suggestion ```` ````). Instead, refer to the fence identifier cleanly as `` `suggestion` `` blocks (or `` `yaml` `` blocks) in prose.
+        2. Ensure every inline code span on every line uses strictly balanced single backticks (`` `code` ``) with no stray or nested backticks inside.
+        3. Always place a blank line immediately before an opening code fence (`` ```lang ``) and immediately after a closing code fence (`` ``` ``).
 
 Output ONLY the final, fixed markdown content. 
 Do not include any conversational preamble. Do not wrap in additional tags.
