@@ -1,7 +1,7 @@
 ---
 name: local-code-review
 description: |
-  Conducts a rigorous, multi-axis local code, documentation, and architecture review in any project (GitHub, Bitbucket, GitLab, or a local directory). Supports both Diff/Change Review Mode (uncommitted changes, branches, commit ranges) and Whole-Codebase Audit Mode (reviewing an entire repository or module without relying on Git diffs). Evaluates correctness, simplicity, architecture, security, performance, test quality, documentation alignment, and visual assets using Dazbo's core review rubric and anti-hallucination guardrails.
+  Conducts a rigorous, multi-axis local code, documentation, and architecture review in any project (GitHub, Bitbucket, GitLab, or a local directory). Supports both Diff/Change Review Mode (uncommitted changes, branches, commit ranges) and Whole-Codebase Audit Mode (reviewing an entire repository or module without relying on Git diffs). Evaluates correctness, simplicity, architecture, security, performance, test quality, documentation alignment, and visual assets using Dazbo's core review rubric and anti-hallucination guardrails. Use when reviewing uncommitted changes, staged diffs, branches, commit ranges, or auditing an entire repository/module locally.
 metadata:
   author: Darren "Dazbo" Lester
   repository: https://github.com/derailed-dash/dazbo-agent-skills
