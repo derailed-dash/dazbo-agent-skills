@@ -30,6 +30,7 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 | **Secrets with Git-Crypt** | Production-grade secrets management workflow. Keeps plaintext files safely gitignored while tracking encrypted versions (`.enc`) in Git. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies, avoiding accidental leak of credentials. |
 | **Create MD from BrowserMCP Snapshot** | High-fidelity parser to convert raw webpage accessibility trees to structured Markdown. Makes parsed web pages easy for agents to read and search. | **Use when** a webpage has been captured with the BrowserMCP `browser_snapshot` tool. Runs a Python parser to reconstruct structured representations of headings, tables, lists, and links. |
 | **Install Gemini Code Review Action** | Automated setup for Dazbo's Gemini-based PR Code Review & Issue Triage action. Streamlines setup and configures secure API credentials. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. Offers interactive credential setup using the GitHub CLI (`gh`). |
+| **Local Code Review** | Multi-axis local code, documentation, and architecture review across any repository (GitHub, Bitbucket, GitLab, or local working tree). Supports both Diff Review Mode and Whole-Codebase Audit Mode. | **Use when** reviewing uncommitted changes, staged diffs, branches, commit ranges, or auditing an entire repository/module locally using Dazbo's Five-Axis rubric and anti-hallucination guardrails. |
 | **Organise Agent Skills** | Standardised workflow for auditing, pruning, and organising agent skills in Antigravity/Gemini environments. Performs filesystem auto-discovery, orphan pruning, and manages `skills.json` as a full inventory control panel to keep context token overhead lean (~30–50 active skills). | **Use when** auditing installed skills, auto-syncing `skills.json` against disk, pruning token bloat, disabling sub-skills managed by meta-skills, or writing activation rules in `GEMINI.md` / `AGENTS.md`. |
 
 ### Installation Instructions
@@ -53,6 +54,7 @@ npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill conve
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill secrets-with-git-crypt
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill create-md-from-browsermcp-snapshot
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill install-gemini-code-review-action
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill local-code-review
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill organise-agent-skills
 ```
 
