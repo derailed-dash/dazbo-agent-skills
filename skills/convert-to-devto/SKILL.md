@@ -109,6 +109,12 @@ Apply the following rules to the supplied content:
         1. **NEVER** write triple backticks inside an inline code span (never write `` ` ```suggestion ` ``, `` `` ```suggestion `` ``, or ```` ```` ```suggestion ```` ````). Instead, refer to the fence identifier cleanly as `` `suggestion` `` blocks (or `` `yaml` `` blocks) in prose.
         2. Ensure every inline code span on every line uses strictly balanced single backticks (`` `code` ``) with no stray or nested backticks inside.
         3. Always place a blank line immediately before an opening code fence (`` ```lang ``) and immediately after a closing code fence (`` ``` ``).
+14. **Ordered List (`1.`, `2.`) Continuation & Preventing List Resets in Redcarpet**:
+    - DEV.to's `Redcarpet` Markdown parser breaks an `<ol>` list and restarts subsequent numbered items back at `1.` whenever an ordered list item contains a blank line followed by an unindented or 3-space-indented paragraph (or when list item text drops to a new unindented line).
+    - **Mandatory Fix**: Keep each numbered list item (`1. **Heading:** Text...`, `2. **Heading:** Text...`) as a single contiguous paragraph on the same line (without blank lines between paragraphs inside a list item), or indent continuation paragraphs/blocks by strictly **4 spaces** so `Redcarpet` preserves the `<ol>` sequence (`1.`, `2.`, `3.`, `4.`).
+15. **Replace Medium Embedly / Datawrapper `<iframe>` Blocks with Native Markdown Tables**:
+    - Medium exports Datawrapper tables as `<iframe src="https://cdn.embedly.com/widgets/media.html?...datawrapper...">` blocks because Medium does not support Markdown tables.
+    - DEV.to strips raw `<iframe>` embeds and natively renders Markdown tables. Whenever converting a Medium export that contains a Datawrapper `<iframe>`, replace it with the original native Markdown table from the source `.md` draft.
 
 Output ONLY the final, fixed markdown content. 
 Do not include any conversational preamble. Do not wrap in additional tags.
