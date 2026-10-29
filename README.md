@@ -29,6 +29,7 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 | **Convert to Dev.to** | Formatter that prepares standard Markdown files for publishing on Dev.to. Ensures metadata and syntax compatibility without manual formatting. | **Use when** preparing technical articles for Dev.to. Automates insertion of YAML frontmatter, liquid syntax conversion, variable formatting, and heading structures. |
 | **Secrets with Git-Crypt** | Production-grade secrets management workflow. Keeps plaintext files safely gitignored while tracking encrypted versions (`.enc`) in Git. | **Use when** managing `.env`, `*.tfvars`, or sensitive keys. Employs a helper sync script to maintain parallel encrypted copies, avoiding accidental leak of credentials. |
 | **Create MD from BrowserMCP Snapshot** | High-fidelity parser to convert raw webpage accessibility trees to structured Markdown. Makes parsed web pages easy for agents to read and search. | **Use when** a webpage has been captured with the BrowserMCP `browser` (`snapshot`) tool. Runs a Python parser to reconstruct structured representations of headings, tables, lists, and links. |
+| **Fix WSL Browser Agent** | Diagnostic and remediation workflow for Antigravity's native `browser` subagent and Chrome DevTools MCP in WSL2 environments. Bridges Windows Chrome `DevToolsActivePort` into WSL2 while avoiding sandbox symlink (`ELOOP`) traps. | **Use when** the native `browser` subagent or `chrome-devtools` MCP fails to connect to Chrome in WSL2 (e.g. `Could not find DevToolsActivePort`, `ELOOP` symlink errors, or port `9222` unreachable). |
 | **Install Gemini Code Review Action** | Automated setup for Dazbo's Gemini-based PR Code Review & Issue Triage action. Streamlines setup and configures secure API credentials. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. Offers interactive credential setup using the GitHub CLI (`gh`). |
 | **Local Code Review** | Multi-axis local code, documentation, and architecture review across any repository (GitHub, Bitbucket, GitLab, or local working tree). Supports both Diff Review Mode and Whole-Codebase Audit Mode. | **Use when** reviewing uncommitted changes, staged diffs, branches, commit ranges, or auditing an entire repository/module locally using Dazbo's Five-Axis rubric and anti-hallucination guardrails. |
 | **Organise Agent Skills** | Standardised workflow for auditing, pruning, and organising agent skills in Antigravity/Gemini environments. Performs filesystem auto-discovery, orphan pruning, and manages `skills.json` as a full inventory control panel to keep context token overhead lean (~30–50 active skills). | **Use when** auditing installed skills, auto-syncing `skills.json` against disk, pruning token bloat, disabling sub-skills managed by meta-skills, or writing activation rules in `GEMINI.md` / `AGENTS.md`. |
@@ -53,6 +54,7 @@ npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill deplo
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill convert-to-devto
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill secrets-with-git-crypt
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill create-md-from-browsermcp-snapshot
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill fix-wsl-browser-agent
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill install-gemini-code-review-action
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill local-code-review
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill organise-agent-skills
@@ -86,7 +88,13 @@ dazbo-agent-skills/
 │   │   ├── SKILL.md                       # Main instruction file
 │   │   └── scripts/                       # Reusable Python parsing script
 │   │       └── parse_snapshot.py
+│   ├── fix-wsl-browser-agent/             # WSL2 Browser Agent & CDP connection fixer
+│   │   ├── SKILL.md                       # Main instruction file
+│   │   └── scripts/                       # Diagnostic and DevToolsActivePort sync script
+│   │       └── sync_devtools_port.sh
 │   ├── install-gemini-code-review-action/ # Installs PR code review & issue triage action
+│   │   └── SKILL.md                       # Main instruction file
+│   ├── local-code-review/                 # Multi-axis local code & architecture review
 │   │   └── SKILL.md                       # Main instruction file
 │   └── organise-agent-skills/             # Audits, prunes, and manages skill token overhead
 │       └── SKILL.md                       # Main instruction file
