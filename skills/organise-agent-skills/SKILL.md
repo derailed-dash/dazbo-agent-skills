@@ -50,7 +50,8 @@ Skills operate under three explicit states within agentic development environmen
 
 1. **Filesystem Auto-Discovery & Full Inventory Audit**:
    - **Standalone Skills**: List all skill directories present on disk under `~/.gemini/config/skills/` (and `.agents/skills/` if in a workspace).
-   - **Packaged Plugin Skills**: Inspect all bundled skills inside `~/.gemini/config/plugins/*/skills/`. (Packaged plugin skills that are unlisted in `skills.json` are treated by Antigravity as discoverable by default and contribute silently to prompt overhead).
+   - **Packaged Plugin Skills**: Inspect all bundled skills inside `~/.gemini/config/plugins/*/skills/` and parked skills in `~/.gemini/config/plugins/*/skills.all/`. Note that `skills.json` only filters standalone skills in `config/skills/`; Antigravity loads **all** skills inside an enabled plugin's `skills/` directory as a bundle. Large plugins (such as `data-agent-kit-plugin`, 41 skills) should either be disabled (`"enabled": false` in `config/config.json`) so their skills are read on demand from `skills.all/` at zero startup token cost, or filtered via `dak-setup` so service-specific skills remain parked in `skills.all/`.
+   - **Marketplace Auto-Updates on Disabled Plugins**: Antigravity updates installed Marketplace plugins on disk even when `"enabled": false` in `config/config.json`. When `data-agent-kit-plugin` auto-updates, the upstream archive replaces the plugin directory without `skills.all/` and may bundle new skills that collide with standalone skills in `config/skills/`. Always run `./scripts/sync_skills.sh` (which invokes `scripts/reconcile_skills.py --write`) to restore `skills.all/`, re-park service-specific skills, remove newly duplicated standalone skills, and prune retired plugin skills.
    - Read `skills.json` (`~/.gemini/config/skills.json`) and compare all disk directories against entries in the `exclude` array.
    - **Identify Discrepancies**:
      - **Newly Discovered Skills**: Standalone skill folders present on disk but missing from `skills.json`.
@@ -138,11 +139,11 @@ To ensure maximum visibility and effortless toggling, `skills.json` is treated a
 
 - **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
 - **Installed and excluded**: Plain string in `exclude` array (e.g. `"alloydb-basics"`). Exact match evaluates to `true`, excluding the skill from Level 1 prompt loading.
-- **Installed and inactive (discoverable)**: `//` prefix in `exclude` array (e.g. `"//bigquery-sql"`). The `//` prefix breaks exact string match (`exclude.includes("bigquery-sql")` evaluates to `false`), causing the loader to treat the skill as discoverable (frontmatter automatically read into Level 1 prompt context).
+- **Installed and inactive (discoverable)**: `//` prefix in `exclude` array (e.g. `"//bigquery-basics"`). The `//` prefix breaks exact string match (`exclude.includes("bigquery-basics")` evaluates to `false`), causing the loader to treat the skill as discoverable (frontmatter automatically read into Level 1 prompt context).
 
 ### Reconciliation & Auto-Sync Procedure
 
-When executing `organise-agent-skills`:
+When executing `organise-agent-skills` (or via `./scripts/sync_skills.sh` and `uv run scripts/reconcile_skills.py --write`):
 1. **Auto-Register Missing Skills**: Add any skill folder found on disk that is absent from `skills.json`. Default newly registered skills to discoverable (`"//skill-name"`) or excluded (`"skill-name"`) based on user preference or token budget strategy.
 2. **Prune Orphaned Entries**: Remove entries from `skills.json` whose corresponding directory on disk no longer exists.
 3. **Sort Alphabetically**: Maintain the `exclude` array sorted in alphabetical order so that scanning and diffing remain clean and predictable.
