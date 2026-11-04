@@ -115,6 +115,18 @@ Apply the following rules to the supplied content:
 15. **Replace Medium Embedly / Datawrapper `<iframe>` Blocks with Native Markdown Tables**:
     - Medium exports Datawrapper tables as `<iframe src="https://cdn.embedly.com/widgets/media.html?...datawrapper...">` blocks because Medium does not support Markdown tables.
     - DEV.to strips raw `<iframe>` embeds and natively renders Markdown tables. Whenever converting a Medium export that contains a Datawrapper `<iframe>`, replace it with the original native Markdown table from the source `.md` draft.
+16. **Adapt the "Before You Go" Call-to-Action for Dev.to**:
+    - DEV.to uses multi-reactions (❤️ 🦄 🤯 🙌 🔥) and bookmarks (🔖) rather than Medium's claps (👏) and email subscribe bell (🔔).
+    - Whenever the post contains the Medium "Before You Go" section, replace it with the Dev.to variant:
+      ```markdown
+      ## Before You Go
+
+      - **Please share** 📢 this with anyone that you think will be interested. It might help them, and it really helps me!
+      - Please **drop some reactions** ❤️ 🦄 🔥 (you can pick more than one!) and **bookmark** 🔖 this post!
+      - Please **leave a comment** 💬. Interaction is good!
+      - **Add a star** ⭐ on my repos!
+      - **Follow** 👉 me here on Dev.to, so you don’t miss my content.
+      ```
 
 Output ONLY the final, fixed markdown content. 
 Do not include any conversational preamble. Do not wrap in additional tags.
