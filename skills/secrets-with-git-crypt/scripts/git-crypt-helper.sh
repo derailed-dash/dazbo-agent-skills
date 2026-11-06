@@ -187,6 +187,15 @@ cmd_sync_to_enc() {
     fi
 }
 
+# Check if a file starts with the git-crypt binary header (\x00GITCRYPT\x00)
+is_encrypted_binary() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        return 1
+    fi
+    LC_ALL=C head -c 10 "$file" 2>/dev/null | tr -d '\000' | grep -q "^GITCRYPT"
+}
+
 # Sync/restore .enc files to their unencrypted counterparts
 cmd_sync_from_enc() {
     is_git_repo
@@ -208,6 +217,10 @@ cmd_sync_from_enc() {
             echo "Error: Encrypted file '$enc_file' not found." >&2
             return 1
         fi
+        if is_encrypted_binary "$enc_file"; then
+            echo "Error: '$enc_file' is locked (encrypted binary). Run '$0 unlock <key_path>' first." >&2
+            return 1
+        fi
         echo "Restoring '$enc_file' -> '$target_file'..."
         cp "$enc_file" "$target_file"
         ensure_ignored "$target_file"
@@ -218,6 +231,10 @@ cmd_sync_from_enc() {
         while IFS= read -r -d '' enc_file; do
             local plain_file="${enc_file%.enc}"
             found=1
+            if is_encrypted_binary "$enc_file"; then
+                echo "[SKIPPED] $enc_file is locked (encrypted binary). Run '$0 unlock <key_path>' first."
+                continue
+            fi
             # Copy only if plain is missing or different
             if [ ! -f "$plain_file" ] || ! cmp -s "$enc_file" "$plain_file"; then
                 echo "Restoring: $enc_file -> $plain_file"
@@ -254,11 +271,11 @@ cmd_status() {
     root_dir=$(git rev-parse --show-toplevel)
     echo "[OK] Inside git repository at: $root_dir"
 
-    # 3. Check initialization
-    if [ -d "$root_dir/.git-crypt" ]; then
-        echo "[OK] git-crypt has been initialized (.git-crypt folder exists)."
+    # 3. Check initialization / unlock state
+    if [ -d "$root_dir/.git-crypt" ] || [ -d "$root_dir/.git/git-crypt" ]; then
+        echo "[OK] git-crypt is initialized and unlocked in this repository."
     else
-        echo "[INFO] git-crypt is not initialized in this repository."
+        echo "[INFO] git-crypt key directory not found (.git/git-crypt); repository may not be initialized or unlocked."
     fi
 
     # 4. Check .gitattributes
@@ -276,27 +293,30 @@ cmd_status() {
     while IFS= read -r -d '' enc_file; do
         found=1
         local plain_file="${enc_file%.enc}"
-        local plain_base
-        plain_base=$(basename "$plain_file")
+        local rel_plain
+        rel_plain=$(realpath --relative-to="$root_dir" "$plain_file")
         
         # Check .gitignore
         local ignored="NO"
-        if [ -f "$plain_file" ]; then
-            local rel_plain
-            rel_plain=$(realpath --relative-to="$root_dir" "$plain_file")
-            if grep -Fxq "$rel_plain" "$root_dir/.gitignore" 2>/dev/null || \
-               grep -Fxq "/$rel_plain" "$root_dir/.gitignore" 2>/dev/null; then
-                ignored="YES"
-            fi
+        if grep -Fxq "$rel_plain" "$root_dir/.gitignore" 2>/dev/null || \
+           grep -Fxq "/$rel_plain" "$root_dir/.gitignore" 2>/dev/null || \
+           git -C "$root_dir" check-ignore -q "$rel_plain" 2>/dev/null; then
+            ignored="YES"
         fi
 
         # Check sync and diff
-        if [ ! -f "$plain_file" ]; then
-            echo "[-] $plain_base.enc -> (Plaintext file missing! Run '$0 sync-from-enc')"
+        if is_encrypted_binary "$enc_file"; then
+            echo "[LOCKED] $rel_plain.enc is encrypted binary (Run '$0 unlock <key_path>')"
+        elif [ ! -f "$plain_file" ]; then
+            echo "[-] $rel_plain.enc -> (Plaintext file missing! Run '$0 sync-from-enc')"
         elif ! cmp -s "$plain_file" "$enc_file"; then
-            echo "[!] $plain_base <-> $plain_base.enc DO NOT MATCH! (Plaintext is modified, run '$0 sync-to-enc')"
+            if [ "$enc_file" -nt "$plain_file" ]; then
+                echo "[!] $rel_plain <-> $rel_plain.enc DO NOT MATCH! (.enc is newer, run '$0 sync-from-enc')"
+            else
+                echo "[!] $rel_plain <-> $rel_plain.enc DO NOT MATCH! (Plaintext is newer, run '$0 sync-to-enc')"
+            fi
         else
-            echo "[OK] $plain_base matches $plain_base.enc (Ignored in git: $ignored)"
+            echo "[OK] $rel_plain matches $rel_plain.enc (Ignored in git: $ignored)"
         fi
     done < <(find "$root_dir" -name "*.enc" -not -path "*/.git/*" -not -path "*/node_modules/*" -print0)
 
