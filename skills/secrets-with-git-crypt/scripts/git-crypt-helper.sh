@@ -19,19 +19,21 @@ usage() {
 Usage: $0 <command> [arguments]
 
 Commands:
-  install             Check and attempt to install git-crypt via apt-get.
-  init <key_path>     Initialize git-crypt, setup .gitattributes, and export the key.
-  unlock <key_path>   Unlock the repository using the provided key.
-  sync-to-enc [file]  Sync unencrypted file(s) to their .enc versions (ignores node_modules/etc.).
-  sync-from-enc [file] Sync/restore .enc file(s) to their unencrypted versions.
-  status              Check git-crypt installation, initialization, and file synchronization state.
+  install                        Check and attempt to install git-crypt via apt-get.
+  init <key_path>                Initialize git-crypt, setup .gitattributes, and export the key.
+  unlock <key_path>              Unlock the repository using the provided key.
+  sync-to-enc [--force] [file]   Sync unencrypted file(s) to their .enc versions (blocks if .enc is newer unless --force).
+  sync-from-enc [--force] [file] Sync/restore .enc file(s) to their unencrypted versions (blocks if plain is newer unless --force).
+  status                         Check git-crypt installation, initialization, and file synchronization state.
 
 Examples:
   $0 init ~/secure-keys/my-project.key
   $0 unlock ~/secure-keys/my-project.key
+  $0 status
   $0 sync-to-enc .env
   $0 sync-to-enc
   $0 sync-from-enc
+  $0 sync-from-enc --force .env
 EOF
 }
 
@@ -56,6 +58,21 @@ ensure_ignored() {
        ! grep -Fxq "/$rel_path" "$root_dir/.gitignore" 2>/dev/null; then
         echo "/$rel_path" >> "$root_dir/.gitignore"
         echo "Added /$rel_path to .gitignore"
+    fi
+}
+
+# Show git diff stat for an updated .enc file against HEAD if tracked
+show_enc_diff_stat() {
+    local root_dir="$1"
+    local enc_file="$2"
+    local rel_enc
+    rel_enc=$(realpath --relative-to="$root_dir" "$enc_file")
+    if git -C "$root_dir" ls-files --error-unmatch "$rel_enc" >/dev/null 2>&1; then
+        local stat_out
+        stat_out=$(git -C "$root_dir" diff --stat HEAD -- "$rel_enc" 2>/dev/null || true)
+        if [ -n "$stat_out" ]; then
+            echo "$stat_out"
+        fi
     fi
 }
 
@@ -147,7 +164,21 @@ cmd_unlock() {
 # Sync unencrypted files to their parallel .enc counterparts
 cmd_sync_to_enc() {
     is_git_repo
-    local target_file="${1:-}"
+    local force=0
+    local target_file=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -f|--force)
+                force=1
+                shift
+                ;;
+            *)
+                target_file="$1"
+                shift
+                ;;
+        esac
+    done
+
     local root_dir
     root_dir=$(git rev-parse --show-toplevel)
 
@@ -158,9 +189,17 @@ cmd_sync_to_enc() {
             return 1
         fi
         local enc_file="${target_file}.enc"
+        if [ -f "$enc_file" ] && ! cmp -s "$target_file" "$enc_file"; then
+            if [ "$enc_file" -nt "$target_file" ] && [ "$force" -eq 0 ]; then
+                echo "Error: '$enc_file' is NEWER than '$target_file'!" >&2
+                echo "Refusing to overwrite newer .enc file with stale plaintext. Run '$0 sync-from-enc $target_file' first (or pass --force)." >&2
+                return 1
+            fi
+        fi
         echo "Syncing '$target_file' -> '$enc_file'..."
         cp "$target_file" "$enc_file"
         ensure_ignored "$target_file"
+        show_enc_diff_stat "$root_dir" "$enc_file"
     else
         # Suffix-based automatic detection mode
         echo "Scanning repository for active .enc files..."
@@ -170,12 +209,14 @@ cmd_sync_to_enc() {
             local plain_file="${enc_file%.enc}"
             if [ -f "$plain_file" ]; then
                 found=1
-                # Sync if plain is newer or if they are different
-                if [ "$plain_file" -nt "$enc_file" ] || ! cmp -s "$plain_file" "$enc_file"; then
+                if cmp -s "$plain_file" "$enc_file"; then
+                    echo "Up-to-date: $plain_file"
+                elif [ "$enc_file" -nt "$plain_file" ] && [ "$force" -eq 0 ]; then
+                    echo "[SKIPPED] $enc_file is NEWER than $plain_file! Run '$0 sync-from-enc $plain_file' first (or pass --force)."
+                else
                     echo "Syncing: $plain_file -> $enc_file"
                     cp "$plain_file" "$enc_file"
-                else
-                    echo "Up-to-date: $plain_file"
+                    show_enc_diff_stat "$root_dir" "$enc_file"
                 fi
                 ensure_ignored "$plain_file"
             fi
@@ -199,7 +240,21 @@ is_encrypted_binary() {
 # Sync/restore .enc files to their unencrypted counterparts
 cmd_sync_from_enc() {
     is_git_repo
-    local target_file="${1:-}"
+    local force=0
+    local target_file=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -f|--force)
+                force=1
+                shift
+                ;;
+            *)
+                target_file="$1"
+                shift
+                ;;
+        esac
+    done
+
     local root_dir
     root_dir=$(git rev-parse --show-toplevel)
 
@@ -221,6 +276,13 @@ cmd_sync_from_enc() {
             echo "Error: '$enc_file' is locked (encrypted binary). Run '$0 unlock <key_path>' first." >&2
             return 1
         fi
+        if [ -f "$target_file" ] && ! cmp -s "$enc_file" "$target_file"; then
+            if [ "$target_file" -nt "$enc_file" ] && [ "$force" -eq 0 ]; then
+                echo "Error: Plaintext '$target_file' is NEWER than '$enc_file'!" >&2
+                echo "Refusing to overwrite newer local edits. Run '$0 sync-to-enc $target_file' or pass --force to overwrite." >&2
+                return 1
+            fi
+        fi
         echo "Restoring '$enc_file' -> '$target_file'..."
         cp "$enc_file" "$target_file"
         ensure_ignored "$target_file"
@@ -235,12 +297,16 @@ cmd_sync_from_enc() {
                 echo "[SKIPPED] $enc_file is locked (encrypted binary). Run '$0 unlock <key_path>' first."
                 continue
             fi
-            # Copy only if plain is missing or different
-            if [ ! -f "$plain_file" ] || ! cmp -s "$enc_file" "$plain_file"; then
+            if [ ! -f "$plain_file" ]; then
                 echo "Restoring: $enc_file -> $plain_file"
                 cp "$enc_file" "$plain_file"
-            else
+            elif cmp -s "$enc_file" "$plain_file"; then
                 echo "Already matches: $plain_file"
+            elif [ "$plain_file" -nt "$enc_file" ] && [ "$force" -eq 0 ]; then
+                echo "[SKIPPED] Plaintext $plain_file is NEWER than $enc_file! Run '$0 sync-to-enc $plain_file' or pass --force."
+            else
+                echo "Restoring: $enc_file -> $plain_file"
+                cp "$enc_file" "$plain_file"
             fi
             ensure_ignored "$plain_file"
         done < <(find "$root_dir" -name "*.enc" -not -path "*/.git/*" -not -path "*/node_modules/*" -print0)
@@ -360,7 +426,6 @@ main() {
         *)
             echo "Unknown command: $command" >&2
             usage
-            exit 1
             ;;
     esac
 }

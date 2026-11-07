@@ -60,12 +60,13 @@ Before attempting any encryption, decryption, or secret sync operations:
 1. **Verify Git Work Tree**:
    - Confirm working directory is inside a Git repository (`git rev-parse --is-inside-work-tree`). If not in a Git repository, halt execution and prompt the user to run `git init` first.
 
-2. **Verify git-crypt Binary & Helper Script**:
+2. **Verify git-crypt Binary, Helper Script & Pre-Edit Sync State (MANDATORY BEFORE EDITING)**:
    - Ensure the helper script at `skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh` is executable (`chmod +x`).
-   - Run the status command of the helper script to check if `git-crypt` is installed and functioning:
+   - **CRITICAL PRE-EDIT RULE**: Before modifying any local plaintext secret file (e.g. `.env`, `mcp_config.json`, `*.tfvars`), you **MUST** run `status` (and `sync-from-enc` if `.enc` is newer) **first**:
      ```bash
      ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh status
      ```
+     *Why this matters:* If `<file>.enc` was updated upstream (e.g. via `git pull`) while the local git-ignored `<file>` is still an older copy, editing the stale `<file>` first updates its `mtime` to "now" and causes `sync-to-enc` to reintroduce deleted lines back into `<file>.enc`. Always reconcile `<file>` from `<file>.enc` (`sync-from-enc`) **before** applying edits.
    - If `git-crypt` is missing, offer to install it via:
      ```bash
      ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh install
@@ -128,8 +129,8 @@ The helper script supports the following commands:
 | `install` | None | Installs git-crypt on Debian/Ubuntu/WSL platforms. |
 | `init` | `<key_path>` | Runs `git-crypt init`, sets up `.gitattributes`, and exports key. |
 | `unlock` | `<key_path>` | Unlocks the repository using the specified key file. |
-| `sync-to-enc` | `[file]` | Syncs unencrypted file(s) to their `.enc` copies; ensures `.gitignore` inclusion. |
-| `sync-from-enc`| `[file]` | Syncs/restores `.enc` copies back to unencrypted files. |
+| `sync-to-enc` | `[--force] [file]` | Syncs unencrypted file(s) to their `.enc` copies (refuses if `.enc` is newer unless `--force`); prints `git diff --stat HEAD` and ensures `.gitignore` inclusion. |
+| `sync-from-enc`| `[--force] [file]` | Syncs/restores `.enc` copies back to unencrypted files (refuses if plaintext is newer unless `--force`). |
 | `status` | None | Evaluates installation, git-crypt initialization, and file sync states. |
 
 ---
