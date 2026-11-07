@@ -37,9 +37,9 @@ Before applying any workarounds:
 
 ---
 
-## 2. Root Cause Architecture: The Three WSL2 Boundaries
+## 2. Root Cause Architecture: The Four WSL2 Boundaries
 
-When the problem is present, it is caused by three distinct boundaries between WSL2 and Windows Chrome:
+When the problem is present, it is caused by up to four distinct boundaries between WSL2 and Windows Chrome:
 
 ### Boundary 1: Network Isolation (`NAT` vs `mirrored`)
 By default, WSL2 uses NAT networking on a separate virtual subnet, preventing Linux processes inside WSL2 from reaching Windows `127.0.0.1:9222`. Enabling `networkingMode=mirrored` in `%USERPROFILE%\.wslconfig` shares `localhost` directly between Windows and WSL2.
@@ -56,6 +56,15 @@ Modern Chrome (144+) and `chrome-devtools-mcp --autoConnect` do not blindly prob
 ### Boundary 3: The Sandbox Symlink Trap (`ELOOP`)
 Do **NOT** create a symbolic link (`ln -s`) from `~/.config/google-chrome/DevToolsActivePort` to `/mnt/c/...`. Because the Antigravity `browser` subagent runs inside a sandboxed Linux container where `/mnt/c` (`drvfs`) is not mounted or cannot be traversed, symlinks fail with `ELOOP: too many symbolic links encountered`. The file **must** be copied as a regular file (`cp -f`).
 
+### Boundary 4: The Legacy `socat TCP-LISTEN:9222` Port-Forwarding Trap
+Older WSL2 setups often include a background `socat` daemon in `~/.bashrc` that forwards `127.0.0.1:9222` to the Windows Hyper-V NAT gateway IP (`$WIN_IP:9222`, e.g. `172.19.160.1:9222`):
+```bash
+socat TCP-LISTEN:9222,fork,reuseaddr TCP:$WIN_IP:9222 &> /dev/null &
+```
+This fails in both networking modes and must be removed:
+- **In `NAT` mode**: Windows Chrome (`chrome://inspect/#remote-debugging`) strictly binds to `127.0.0.1:9222` and `[::1]:9222` on the Windows loopback interface (`netstat.exe -ano | grep 9222`) and **refuses** connections on the `172.x.x.x` Hyper-V interface. However, because `socat` listens on `*:9222` in WSL2, TCP connections to `127.0.0.1:9222` appear to connect and then silently hang until timeout.
+- **In `mirrored` mode**: `socat` squats on port `9222` inside WSL2 and hijacks traffic away from the native mirrored loopback interface.
+
 ---
 
 ## 3. Diagnostic & Remediation Procedure
@@ -70,9 +79,10 @@ bash ~/.gemini/config/skills/fix-wsl-browser-agent/scripts/sync_devtools_port.sh
 
 The script automatically:
 1. Verifies WSL2 is active.
-2. Locates the active Windows Chrome `DevToolsActivePort` file under `/mnt/c/Users/*/AppData/Local/Google/Chrome/User Data/DevToolsActivePort`.
-3. Removes any broken symlink at `~/.config/google-chrome/DevToolsActivePort` and copies the file as a regular file.
-4. Verifies that `127.0.0.1:<port>` is reachable from WSL2.
+2. Detects and terminates any legacy `socat TCP-LISTEN:9222` processes hijacking port 9222 (and warns if `~/.bashrc` still contains the legacy `socat` snippet).
+3. Locates the active Windows Chrome `DevToolsActivePort` file under `/mnt/c/Users/*/AppData/Local/Google/Chrome/User Data/DevToolsActivePort`.
+4. Removes any broken symlink at `~/.config/google-chrome/DevToolsActivePort` and copies the file as a regular file.
+5. Verifies that `127.0.0.1:<port>` is reachable from WSL2, and if unreachable, deterministically checks Windows `netstat.exe`, WSL2 routing mode (`NAT` vs `mirrored`), and `%USERPROFILE%\.wslconfig` to pinpoint the exact fix.
 
 ### Step 2: Handle Any Reported Layer Failures
 
@@ -81,13 +91,14 @@ Depending on the script output:
 - **If the Windows `DevToolsActivePort` file is missing**:
   Instruct the user to open Google Chrome on Windows, navigate to `chrome://inspect/#remote-debugging`, and tick the checkbox to enable remote debugging. Once enabled, re-run `sync_devtools_port.sh`.
 - **If `127.0.0.1:<port>` is unreachable from WSL2**:
-  1. First check if Chrome on Windows was recently closed or restarted (if so, ask the user to ensure Chrome is open with `chrome://inspect/#remote-debugging` enabled).
-  2. If Chrome is open and listening on Windows but unreachable on `127.0.0.1` in WSL2, guide the user to enable **WSL Mirrored Networking** in `%USERPROFILE%\.wslconfig`:
+  1. Check the script's diagnostic output: it automatically queries Windows `netstat.exe` and WSL's routing table.
+  2. If Windows Chrome is not listening on `127.0.0.1:<port>`, ask the user to ensure Chrome is open with `chrome://inspect/#remote-debugging` enabled.
+  3. If Windows Chrome **is** listening on `127.0.0.1:<port>` on Windows, but WSL2 is running in `NAT` mode (`default via 172.x.x.x`), ensure `%USERPROFILE%\.wslconfig` contains:
      ```ini
      [wsl2]
      networkingMode=mirrored
      ```
-     Then run `wsl --shutdown` from Windows PowerShell/Command Prompt and restart WSL.
+     Then instruct the user to run `wsl --shutdown` from Windows PowerShell/Terminal and reopen their session when convenient.
 
 ### Step 3: Retry the Browser Subagent
 
