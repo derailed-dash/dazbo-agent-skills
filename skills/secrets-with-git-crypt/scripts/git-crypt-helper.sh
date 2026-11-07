@@ -20,15 +20,16 @@ Usage: $0 <command> [arguments]
 
 Commands:
   install                        Check and attempt to install git-crypt via apt-get.
-  init <key_path>                Initialize git-crypt, setup .gitattributes, and export the key.
-  unlock <key_path>              Unlock the repository using the provided key.
+  init [--force] <key_path>      Initialize git-crypt, setup .gitattributes, and export the key (blocks if shared key exists).
+  unlock [key_path]              Unlock the repository using the provided or auto-detected shared key.
   sync-to-enc [--force] [file]   Sync unencrypted file(s) to their .enc versions (blocks if .enc is newer unless --force).
   sync-from-enc [--force] [file] Sync/restore .enc file(s) to their unencrypted versions (blocks if plain is newer unless --force).
   status                         Check git-crypt installation, initialization, and file synchronization state.
 
 Examples:
+  $0 unlock ~/localdev/git-crypt-key
+  $0 unlock
   $0 init ~/secure-keys/my-project.key
-  $0 unlock ~/secure-keys/my-project.key
   $0 status
   $0 sync-to-enc .env
   $0 sync-to-enc
@@ -93,13 +94,71 @@ cmd_install() {
     fi
 }
 
+# Configure .gitattributes if not already done
+ensure_gitattributes() {
+    local root_dir="$1"
+    local gitattr="$root_dir/.gitattributes"
+    local attr_line="*.enc filter=git-crypt diff=git-crypt"
+    if [ ! -f "$gitattr" ]; then
+        echo "$attr_line" > "$gitattr"
+        echo "Created .gitattributes with git-crypt filter configuration."
+    elif ! grep -Fq "filter=git-crypt" "$gitattr"; then
+        echo "$attr_line" >> "$gitattr"
+        echo "Added git-crypt filter configuration to .gitattributes."
+    else
+        echo ".gitattributes already configured for git-crypt."
+    fi
+}
+
+# Detect an existing shared git-crypt key
+find_default_shared_key() {
+    local root_dir="$1"
+    local parent_key
+    parent_key="$(dirname "$root_dir")/git-crypt-key"
+    if [ -n "${GIT_CRYPT_KEY_PATH:-}" ] && [ -f "${GIT_CRYPT_KEY_PATH}" ]; then
+        echo "${GIT_CRYPT_KEY_PATH}"
+        return 0
+    elif [ -f "$parent_key" ]; then
+        echo "$parent_key"
+        return 0
+    elif [ -f "$HOME/localdev/git-crypt-key" ]; then
+        echo "$HOME/localdev/git-crypt-key"
+        return 0
+    fi
+    return 1
+}
+
 # Initialize git-crypt and export key
 cmd_init() {
     is_git_repo
-    local key_path="${1:-}"
+    local force=0
+    local key_path=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -f|--force)
+                force=1
+                shift
+                ;;
+            *)
+                key_path="$1"
+                shift
+                ;;
+        esac
+    done
+
     if [ -z "$key_path" ]; then
         echo "Error: Key path argument is required for init." >&2
-        echo "Usage: $0 init <key_path>" >&2
+        echo "Usage: $0 init [--force] <key_path>" >&2
+        return 1
+    fi
+
+    local root_dir
+    root_dir=$(git rev-parse --show-toplevel)
+
+    local shared_key=""
+    if shared_key=$(find_default_shared_key "$root_dir") && [ "$force" -eq 0 ]; then
+        echo "Error: Existing shared git-crypt key detected at '$shared_key'!" >&2
+        echo "Refusing to generate a new per-repo key. Run '$0 unlock $shared_key' to use your shared key (or pass --force to mint a new key)." >&2
         return 1
     fi
 
@@ -110,29 +169,14 @@ cmd_init() {
     fi
 
     # Initialize if not already done
-    local root_dir
-    root_dir=$(git rev-parse --show-toplevel)
-    if [ -d "$root_dir/.git-crypt" ] || git-crypt status >/dev/null 2>&1; then
+    if [ -d "$root_dir/.git-crypt" ] || [ -d "$root_dir/.git/git-crypt" ]; then
         echo "git-crypt appears already initialized."
     else
         echo "Initializing git-crypt..."
         git-crypt init
     fi
 
-    # Configure .gitattributes if not already done
-    local gitattr="$root_dir/.gitattributes"
-    local attr_line="*.enc filter=git-crypt diff=git-crypt"
-    if [ ! -f "$gitattr" ]; then
-        echo "$attr_line" > "$gitattr"
-        echo "Created .gitattributes with git-crypt filter configuration."
-    else
-        if ! grep -Fq "filter=git-crypt" "$gitattr"; then
-            echo "$attr_line" >> "$gitattr"
-            echo "Added git-crypt filter configuration to .gitattributes."
-        else
-            echo ".gitattributes already configured for git-crypt."
-        fi
-    fi
+    ensure_gitattributes "$root_dir"
 
     # Export key
     mkdir -p "$(dirname "$key_path")"
@@ -141,20 +185,28 @@ cmd_init() {
     echo "Key exported successfully! Keep this key safe and NEVER check it into the repository."
 }
 
-# Unlock repository
+# Unlock repository (new or cloned)
 cmd_unlock() {
     is_git_repo
+    local root_dir
+    root_dir=$(git rev-parse --show-toplevel)
     local key_path="${1:-}"
     if [ -z "$key_path" ]; then
-        echo "Error: Key path argument is required for unlock." >&2
-        echo "Usage: $0 unlock <key_path>" >&2
-        return 1
+        if key_path=$(find_default_shared_key "$root_dir"); then
+            echo "Auto-detected shared key: $key_path"
+        else
+            echo "Error: Key path argument is required for unlock (and no shared key found at ../git-crypt-key or ~/localdev/git-crypt-key)." >&2
+            echo "Usage: $0 unlock <key_path>" >&2
+            return 1
+        fi
     fi
 
     if [ ! -f "$key_path" ]; then
         echo "Error: Key file not found at '$key_path'" >&2
         return 1
     fi
+
+    ensure_gitattributes "$root_dir"
 
     echo "Unlocking repository with key: $key_path"
     git-crypt unlock "$key_path"

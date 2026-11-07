@@ -72,20 +72,21 @@ Before attempting any encryption, decryption, or secret sync operations:
      ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh install
      ```
 
-**Step 2: Initialize or unlock the repository**
+**Step 2: Unlock with an existing shared key (preferred) or initialize a new key**
 
-- **If this is a new repository (or you are setting up git-crypt for the first time)**:
-  Decide where the secure key will be stored *outside* of the repository (e.g., `~/secure-keys/my-project.key`). Proactively run:
+- **CRITICAL KEY REUSE RULE**: Always check whether the user already has a shared `git-crypt` symmetric key (e.g. `~/localdev/git-crypt-key`, `../git-crypt-key`, or `$GIT_CRYPT_KEY_PATH`) **before** ever running `init`, even on a brand-new repository!
+  - `git-crypt unlock <key_path>` works on **both** cloned repositories and brand-new repositories (once `.gitattributes` is committed on a clean working tree) to bind the repository to your existing shared key without generating a new key.
+  - If a shared key exists (or if `unlock` is run without arguments when `../git-crypt-key` or `~/localdev/git-crypt-key` is present), run:
+    ```bash
+    ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh unlock ~/localdev/git-crypt-key
+    ```
+- **Only if no shared key exists AND the user explicitly wants to mint a brand-new key**:
+  Decide where the secure key will be stored *outside* of the repository (e.g., `~/secure-keys/my-project.key`) and run:
   ```bash
   ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh init ~/secure-keys/my-project.key
   ```
+  *(Note: `init` will refuse to generate a new key if an existing shared key is detected at `../git-crypt-key` or `~/localdev/git-crypt-key` unless `--force` is passed.)*
   *Ensure the key is NEVER committed to git.*
-
-- **If this is a cloned repository containing `.enc` files**:
-  Ask the user for the local path to the existing key file, and run:
-  ```bash
-  ./skills/secrets-with-git-crypt/scripts/git-crypt-helper.sh unlock /path/to/existing.key
-  ```
 
 **Step 3: Configure tracking and gitignore rules**
 
@@ -127,8 +128,8 @@ The helper script supports the following commands:
 | Command | Arguments | Description |
 | :--- | :--- | :--- |
 | `install` | None | Installs git-crypt on Debian/Ubuntu/WSL platforms. |
-| `init` | `<key_path>` | Runs `git-crypt init`, sets up `.gitattributes`, and exports key. |
-| `unlock` | `<key_path>` | Unlocks the repository using the specified key file. |
+| `init` | `[--force] <key_path>` | Runs `git-crypt init`, sets up `.gitattributes`, and exports key (blocks if a shared key already exists unless `--force`). |
+| `unlock` | `[key_path]` | Unlocks the repository (new or cloned) using the specified key file or auto-detected shared key (`../git-crypt-key` / `~/localdev/git-crypt-key`). |
 | `sync-to-enc` | `[--force] [file]` | Syncs unencrypted file(s) to their `.enc` copies (refuses if `.enc` is newer unless `--force`); prints `git diff --stat HEAD` and ensures `.gitignore` inclusion. |
 | `sync-from-enc`| `[--force] [file]` | Syncs/restores `.enc` copies back to unencrypted files (refuses if plaintext is newer unless `--force`). |
 | `status` | None | Evaluates installation, git-crypt initialization, and file sync states. |
