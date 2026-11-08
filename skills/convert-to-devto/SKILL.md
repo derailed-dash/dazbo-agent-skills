@@ -63,7 +63,7 @@ Apply the following rules to the supplied content:
       _My Caption_
     - After fixing:
       ![My Caption](https://example.com/image.png)
-10.  **Frontmatter Check**: Ensure valid YAML frontmatter exists at the top.
+10. **Frontmatter Check**: Ensure valid YAML frontmatter exists at the top.
     - Ensure the frontmatter follows strict YAML syntax.
     - Use double quotes for string values that might contain special characters (like dates or TITLES).
     - If missing, create it.
@@ -74,19 +74,24 @@ Apply the following rules to the supplied content:
       - `tags`: todo1, todo2
       - `canonical_url`: "TODO"
       - `cover_image`: "TODO"
-11. **Liquid Tags**: Convert standalone Twitter and YouTube links to Dev.to Liquid tags.
+11. **Optional Image Hosting Conversion (Raw GitHub / jsDelivr CDN)**:
+    - If the user or repository specifies a public GitHub repository for media assets (e.g. `--repo user/repo --branch main`), convert relative local image paths (e.g. `![Alt](media/foo.png)`) to public hosted CDN or raw GitHub URLs:
+      - CDN format (recommended): `https://cdn.jsdelivr.net/gh/<user>/<repo>@<branch>/<path/to/media/foo.png>`
+      - Raw GitHub format: `https://raw.githubusercontent.com/<user>/<repo>/<branch>/<path/to/media/foo.png>`
+    - If no repository or base URL is supplied, leave existing URLs intact or keep relative paths for manual review.
+12. **Liquid Tags**: Convert standalone Twitter and YouTube links to Dev.to Liquid tags.
     - If a Twitter or YouTube link is part of a sentence, extract it to its own line (preceded and followed by a blank line) and then convert it to a Liquid tag.
     - Twitter/X: `https://twitter.com/user/status/123` or `x.com/...` -> `{% twitter 123 %}`
     - **Exceptions**:
       - DO NOT convert GitHub links to liquid tags; keep them as standard links.
       - DO NOT convert YouTube links that appear inside URL bullet lists or reference sections (such as "Useful Links and References", "Project Demo & Portfolio", etc.). Keep them as standard Markdown links (e.g. `- [FinSavant YouTube Demo](https://www.youtube.com/watch?v=zs_IRUxIx4E)`) to avoid interrupting link lists with large embeds.
     - YouTube: `https://youtube.com/watch?v=123` or `youtu.be/123` -> `{% youtube 123 %}`
-12. **Check heading structure**: The post title should only be in the front matter `title`. 
+13. **Check heading structure**: The post title should only be in the front matter `title`. 
     It should not be repeated in the markdown content.
     Subsequently, all top-level headings in the md content should be H2 (##). Ensure that sub-headings are at the appropriate level. 
     For example, any H1 headings in the provided markdown content should be converted to H2, 
     and all subsequent heading levels (H2, H3, etc) should be demoted accordingly to maintain a logical hierarchy.
-13. **Liquid/Jekyll Escaping, Backticks, & Forem's `CODE_BLOCKS_REGEX` Parser**:
+14. **Liquid/Jekyll Escaping, Backticks, & Forem's `CODE_BLOCKS_REGEX` Parser**:
     - **Do NOT use `{% raw %}` or `{% endraw %}` tags** around or inside code blocks. DEV.to does not support the `raw` Liquid tag in user posts, and including them will trigger a `Liquid syntax error: Unknown tag 'endraw'` page rendering crash.
     - Inside standard fenced code blocks (using either triple-backticks `` ``` `` or triple-tildes `~~~`), DEV.to natively disables Liquid compilation. Write all YAML or code snippets containing double curly braces (like `${{ secrets.GEMINI_API_KEY }}`) exactly as-is, without any escaping.
     - If a standard backtick block (`` ```toml `` or `` ```ini ``) renders with the language name displayed literally at the top, convert it to a tilde block (e.g. `~~~toml` or `~~~~toml`) to bypass the highlighting parser glitch.
@@ -109,13 +114,13 @@ Apply the following rules to the supplied content:
         1. **NEVER** write triple backticks inside an inline code span (never write `` ` ```suggestion ` ``, `` `` ```suggestion `` ``, or ```` ```` ```suggestion ```` ````). Instead, refer to the fence identifier cleanly as `` `suggestion` `` blocks (or `` `yaml` `` blocks) in prose.
         2. Ensure every inline code span on every line uses strictly balanced single backticks (`` `code` ``) with no stray or nested backticks inside.
         3. Always place a blank line immediately before an opening code fence (`` ```lang ``) and immediately after a closing code fence (`` ``` ``).
-14. **Ordered List (`1.`, `2.`) Continuation & Preventing List Resets in Redcarpet**:
+15. **Ordered List (`1.`, `2.`) Continuation & Preventing List Resets in Redcarpet**:
     - DEV.to's `Redcarpet` Markdown parser breaks an `<ol>` list and restarts subsequent numbered items back at `1.` whenever an ordered list item contains a blank line followed by an unindented or 3-space-indented paragraph (or when list item text drops to a new unindented line).
     - **Mandatory Fix**: Keep each numbered list item (`1. **Heading:** Text...`, `2. **Heading:** Text...`) as a single contiguous paragraph on the same line (without blank lines between paragraphs inside a list item), or indent continuation paragraphs/blocks by strictly **4 spaces** so `Redcarpet` preserves the `<ol>` sequence (`1.`, `2.`, `3.`, `4.`).
-15. **Replace Medium Embedly / Datawrapper `<iframe>` Blocks with Native Markdown Tables**:
+16. **Replace Medium Embedly / Datawrapper `<iframe>` Blocks with Native Markdown Tables**:
     - Medium exports Datawrapper tables as `<iframe src="https://cdn.embedly.com/widgets/media.html?...datawrapper...">` blocks because Medium does not support Markdown tables.
     - DEV.to strips raw `<iframe>` embeds and natively renders Markdown tables. Whenever converting a Medium export that contains a Datawrapper `<iframe>`, replace it with the original native Markdown table from the source `.md` draft.
-16. **Adapt the "Before You Go" Call-to-Action for Dev.to**:
+17. **Adapt the "Before You Go" Call-to-Action for Dev.to**:
     - DEV.to uses multi-reactions (❤️ 🦄 🤯 🙌 🔥) and bookmarks (🔖) rather than Medium's claps (👏) and email subscribe bell (🔔).
     - Whenever the post contains the Medium "Before You Go" section, replace it with the Dev.to variant:
       ```markdown
