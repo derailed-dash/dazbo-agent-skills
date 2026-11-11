@@ -1,7 +1,7 @@
 ---
 name: organise-agent-skills
 description: |
-  Standardised workflow for auditing, pruning, and organising agent skills in agentic development environments, such as Antigravity. Use when reviewing installed skills, pruning token overhead, disabling sub-skills managed by meta-skills, or adding on-demand activation rules to GEMINI.md or AGENTS.md.
+  Standardised workflow for auditing, pruning, and organising agent skills in agentic development environments, such as Antigravity. Use when reviewing installed skills, pruning token overhead, disabling sub-skills managed by meta-skills, or adding on-demand activation rules to modular rules (config/rules/on-demand-skills.md), GEMINI.md, or AGENTS.md.
 metadata:
   author: Darren "Dazbo" Lester
   repository: https://github.com/derailed-dash/dazbo-agent-skills
@@ -10,7 +10,7 @@ metadata:
 # Organising Agent Skills
 
 > [!IMPORTANT]
-> **Mandatory User Confirmation Guardrail**: The agent MUST NOT delete any skill directories, disable/enable skills in configuration files (`skills.json`), or mutate configuration/rules documents (`GEMINI.md`, `AGENTS.md`, `README.md`) without first presenting the audit findings, proposed actions, and token metrics to the user and receiving explicit confirmation to proceed.
+> **Mandatory User Confirmation Guardrail**: The agent MUST NOT delete any skill directories, disable/enable skills in configuration files (`skills.json`), or mutate configuration/rules documents (`config/rules/*.md`, `GEMINI.md`, `AGENTS.md`, `README.md`) without first presenting the audit findings, proposed actions, and token metrics to the user and receiving explicit confirmation to proceed.
 
 This skill provides a repeatable, structured workflow for auditing, pruning, and organising agent skills in Antigravity and Gemini environments. It ensures your prompt context window remains lean (~30–50 active skills / ~3,000 tokens overhead per interaction turn) while retaining full access to all installed skills.
 
@@ -21,8 +21,8 @@ This skill provides a repeatable, structured workflow for auditing, pruning, and
 - [Skill Lifecycle & States](#skill-lifecycle--states)
 - [Workflow Phase 1: Audit & Discovery](#workflow-phase-1-audit--discovery)
 - [Workflow Phase 2: Meta-Skill Delegation](#workflow-phase-2-meta-skill-delegation)
-- [Workflow Phase 3: On-Demand Rules (`GEMINI.md` / `AGENTS.md`)](#workflow-phase-3-on-demand-rules-geminimd--agentsmd)
-- [Workflow Phase 4: Portability & `skills.json` Exclusions](#workflow-phase-4-portability--skillsjson-exclusions)
+- [Workflow Phase 3: On-Demand Rules (`config/rules/on-demand-skills.md` / `AGENTS.md`)](#workflow-phase-3-on-demand-rules-configruleson-demand-skillsmd--agentsmd)
+- [Workflow Phase 4: Portability & `skills.json` Standalone Inventory](#workflow-phase-4-portability--skillsjson-standalone-inventory)
 - [Workflow Phase 5: Documentation Update](#workflow-phase-5-documentation-update)
 
 ---
@@ -32,7 +32,7 @@ This skill provides a repeatable, structured workflow for auditing, pruning, and
 When an agent turn starts, the `name` and `description` of every **Installed and inactive (discoverable)** skill are injected into the system prompt context. 
 
 * **The Problem**: Over-accumulating skills (100+ discoverable skills) injects 6,000–10,000+ tokens into every single interaction turn, wasting context budget and causing LLM decision fatigue (hallucinating or picking the wrong skill due to description overlap).
-* **The Target State**: Maintain a **lean core of ~30 to 50 discoverable skills** (~3,000 tokens prompt overhead), placing specialised or sub-skills into an **Installed and excluded** state, using meta-skill routing and `GEMINI.md` activation rules for everything else.
+* **The Target State**: Maintain a **lean core of ~30 to 50 discoverable skills** (~3,000 tokens prompt overhead), placing specialised or sub-skills into an **Installed and excluded** state, using meta-skill routing and modular `model_decision` rules (`config/rules/on-demand-skills.md`) for everything else.
 
 ---
 
@@ -50,15 +50,15 @@ Skills operate under three explicit states within agentic development environmen
 
 1. **Filesystem Auto-Discovery & Full Inventory Audit**:
    - **Standalone Skills**: List all skill directories present on disk under `~/.gemini/config/skills/` (and `.agents/skills/` if in a workspace).
-   - **Packaged Plugin Skills**: Inspect all bundled skills inside `~/.gemini/config/plugins/*/skills/` and parked skills in `~/.gemini/config/plugins/*/skills.all/`. Note that `skills.json` only filters standalone skills in `config/skills/`; Antigravity loads **all** skills inside an enabled plugin's `skills/` directory as a bundle. Large plugins (such as `data-agent-kit-plugin`, 41 skills) should either be disabled (`"enabled": false` in `config/config.json`) so their skills are read on demand from `skills.all/` at zero startup token cost, or filtered via `dak-setup` so service-specific skills remain parked in `skills.all/`.
-   - **Marketplace Auto-Updates on Disabled Plugins**: Antigravity updates installed Marketplace plugins on disk even when `"enabled": false` in `config/config.json`. When `data-agent-kit-plugin` auto-updates, the upstream archive replaces the plugin directory without `skills.all/` and may bundle new skills that collide with standalone skills in `config/skills/`. Always run `./scripts/sync_skills.sh` (which invokes `scripts/reconcile_skills.py --write`) to restore `skills.all/`, re-park service-specific skills, remove newly duplicated standalone skills, and prune retired plugin skills.
-   - Read `skills.json` (`~/.gemini/config/skills.json`) and compare all disk directories against entries in the `exclude` array.
+   - **Packaged Plugin Skills**: Inspect all bundled skills inside `~/.gemini/config/plugins/*/skills/` and parked skills in `~/.gemini/config/plugins/*/skills.all/`. Note that `skills.json` strictly filters **standalone skills** in `config/skills/` — never add plugin skill names to `skills.json` (they are no-ops). Antigravity loads **all** skills inside an enabled plugin's `skills/` directory as a bundle. Large plugins (such as `data-agent-kit-plugin`, 40 skills) should be disabled (`"enabled": false` in `config/config.json`), and specialised plugin sub-skills (e.g. inside `chrome-devtools-plugin` or `google-cloud-developer`) can be parked into `skills.all/` via `scripts/sync_skills.sh` so they remain readable on demand at zero startup token cost.
+   - **Marketplace Auto-Updates on Disabled Plugins**: Antigravity updates installed Marketplace plugins on disk even when `"enabled": false` in `config/config.json`. When a plugin auto-updates, the upstream archive replaces the plugin directory without `skills.all/` and may bundle new skills that collide with standalone skills in `config/skills/`. Always run `./scripts/sync_skills.sh` (which invokes `scripts/reconcile_skills.py --write`) to restore `skills.all/`, re-park sub-skills, remove newly duplicated standalone skills, and prune retired skill entries.
+   - Read `skills.json` (`~/.gemini/config/skills.json`) and compare all standalone `config/skills/` directories against entries in the `exclude` array.
    - **Identify Discrepancies**:
-     - **Newly Discovered Skills**: Standalone skill folders present on disk but missing from `skills.json`.
-     - **Unlisted Plugin Skills**: Plugin skills present on disk but absent from `skills.json`.
-     - **Orphaned Entries**: Entries in `skills.json` (with or without `//`) whose directory no longer exists on disk.
-     - **Installed and Excluded Skills**: Skills listed in `skills.json` without the `//` string prefix.
-     - **Installed and Inactive (Discoverable) Skills**: Skills listed in `skills.json` with the `//` string prefix.
+     - **Newly Discovered Standalone Skills**: Standalone skill folders present in `config/skills/` but missing from `skills.json`.
+     - **Active Plugin Skills**: Plugin skills inside enabled `config/plugins/*/skills/` (counted towards the active Level 1 prompt budget, managed via plugin enablement or `skills.all/` parking rather than `skills.json`).
+     - **Orphaned or No-Op Plugin Entries**: Entries in `skills.json` (with or without `//`) whose standalone directory no longer exists in `config/skills/` (including plugin skill names that do not belong in `skills.json`).
+     - **Installed and Excluded Skills**: Standalone skills listed in `skills.json` without the `//` string prefix.
+     - **Installed and Inactive (Discoverable) Skills**: Standalone skills listed in `skills.json` with the `//` string prefix.
 
 2. **Measure Prompt Footprint**:
    - Sum word/token count of descriptions across all active discoverable skills (including unlisted plugin skills).
@@ -106,47 +106,36 @@ Identify master meta-skills that orchestrate sub-skills:
 
 ---
 
-## Workflow Phase 3: On-Demand Rules (`GEMINI.md` / `AGENTS.md`)
+## Workflow Phase 3: On-Demand Rules (`config/rules/on-demand-skills.md` / `AGENTS.md`)
 
-Whenever disabling a specialised or niche domain skill in `skills.json` (skills that are not sub-skills of a master meta-skill), you **MUST** ensure an activation rule exists in `GEMINI.md` or `AGENTS.md` so the agent knows when to enable or inspect it on demand.
+Whenever disabling a specialised or niche domain skill in `skills.json` (skills that are not sub-skills of an active master meta-skill), ensure an on-demand routing entry exists in a modular `model_decision` rule (`config/rules/on-demand-skills.md` globally, or workspace `.agents/rules/` / `AGENTS.md`) rather than bloating always-on `GEMINI.md`:
 
 1. **Disable in `skills.json`**:
-   - Exclude the domain skills from automatic prompt injection by default (e.g. plain string in `exclude`).
+   - Exclude the standalone domain skill from automatic Level 1 prompt injection (plain string in `exclude`).
 
-2. **Mandatory Rule Generation in `GEMINI.md` or `AGENTS.md`**:
-   - Inspect `GEMINI.md` (or `AGENTS.md` for workspace skills) under `## Knowledge Rules`.
-   - If an activation rule for the disabled domain skill does **not** already exist, you **MUST** draft and append an activation rule using the following template:
-
-   ```markdown
-   ### <Domain / Skill Name> Activation Rule
-
-   The `<skill-name>` skill is disabled by default in `skills.json` to keep context window overhead lean.
-
-   **Activation Rule**: Activate or inspect `<skill-name>` (by adding `//` in `skills.json` or reading on demand) whenever <specific scenario, task type, or trigger conditions>.
-   ```
-
-   *Examples*:
-   - **GCS Security Assessment** (`gcs-security-assessment`): Activate whenever auditing bucket access controls, storage security posture, or SAIF compliance.
-   - **NotebookLM Auth** (`notebooklm-auth`): Activate whenever diagnosing or resolving NotebookLM MCP cookie or authentication errors.
+2. **Curated Domain Table + Automated Self-Maintenance**:
+   - Group related excluded skills into a concise domain routing table inside `config/rules/on-demand-skills.md` (`trigger: model_decision` with a broad domain-agnostic trigger description so newly installed skills in new domains remain activatable without editing the trigger).
+   - Run `uv run scripts/reconcile_skills.py --write` (or `./scripts/sync_skills.sh`), which automatically appends any newly excluded standalone skills not yet referenced in `config/rules/on-demand-skills.md` between `<!-- AUTO-GENERATED-EXCLUDED-SKILLS:START -->` and `<!-- AUTO-GENERATED-EXCLUDED-SKILLS:END -->` using each skill's frontmatter summary.
 
 ---
 
-## Workflow Phase 4: Portability & `skills.json` Full-Inventory Management
+## Workflow Phase 4: Portability & `skills.json` Standalone Inventory
 
-To ensure maximum visibility and effortless toggling, `skills.json` is treated as an **explicit full inventory control panel** for all installed skills rather than a partial list of exclusions.
+To ensure maximum visibility and effortless toggling without no-op clutter, `skills.json` is treated as an **explicit full inventory control panel for standalone skills** in `config/skills/` (never plugin-bundled skills).
 
 ### Antigravity `skills.json` Mechanics
 
 - **Location**: `~/.gemini/config/skills.json` (or workspace `.agents/skills.json`).
-- **Installed and excluded**: Plain string in `exclude` array (e.g. `"alloydb-basics"`). Exact match evaluates to `true`, excluding the skill from Level 1 prompt loading.
-- **Installed and inactive (discoverable)**: `//` prefix in `exclude` array (e.g. `"//bigquery-basics"`). The `//` prefix breaks exact string match (`exclude.includes("bigquery-basics")` evaluates to `false`), causing the loader to treat the skill as discoverable (frontmatter automatically read into Level 1 prompt context).
+- **Installed and excluded**: Plain string in `exclude` array (e.g. `"alloydb-basics"`). Exact match evaluates to `true`, excluding the standalone skill from Level 1 prompt loading.
+- **Installed and inactive (discoverable)**: `//` prefix in `exclude` array (e.g. `"//bigquery-basics"`). The `//` prefix breaks exact string match (`exclude.includes("bigquery-basics")` evaluates to `false`), causing the loader to treat the standalone skill as discoverable (frontmatter automatically read into Level 1 prompt context).
 
 ### Reconciliation & Auto-Sync Procedure
 
 When executing `organise-agent-skills` (or via `./scripts/sync_skills.sh` and `uv run scripts/reconcile_skills.py --write`):
-1. **Auto-Register Missing Skills**: Add any skill folder found on disk that is absent from `skills.json`. Default newly registered skills to discoverable (`"//skill-name"`) or excluded (`"skill-name"`) based on user preference or token budget strategy.
-2. **Prune Orphaned Entries**: Remove entries from `skills.json` whose corresponding directory on disk no longer exists.
-3. **Sort Alphabetically**: Maintain the `exclude` array sorted in alphabetical order so that scanning and diffing remain clean and predictable.
+1. **Auto-Register Missing Standalone Skills**: Add any standalone skill folder found in `config/skills/` that is absent from `skills.json` (defaulting to excluded unless explicitly enabled with `//`).
+2. **Prune Orphaned & Plugin Entries**: Remove entries from `skills.json` whose standalone directory in `config/skills/` no longer exists, as well as any no-op plugin skill names.
+3. **Sync On-Demand Rule**: Populate any unmapped excluded standalone skills into `config/rules/on-demand-skills.md`.
+4. **Sort Alphabetically**: Maintain the `exclude` array sorted alphabetically (ignoring leading `//`) so scanning and diffing remain clean and predictable.
 
 #### Example `skills.json`:
 ```json
@@ -185,10 +174,9 @@ When executing `organise-agent-skills` (or via `./scripts/sync_skills.sh` and `u
    Once approved and executed, present the final metrics table showing exact deltas alongside a clear breakdown of what was done:
    * **Installed & Discoverable Skills**: Skills whose frontmatter is pre-loaded into Level 1 prompt context.
    * **Installed & Excluded Sub-Skills**: Skills read and activated on demand by parent meta-skills.
-   * **Installed & Excluded On-Demand Skills**: Skills activated via `GEMINI.md` / `AGENTS.md` rules.
+   * **Installed & Excluded On-Demand Skills**: Skills activated via `config/rules/on-demand-skills.md`, `GEMINI.md`, or `AGENTS.md` rules.
    * **Installed & Excluded Domain Skills**: Niche/specialised skills kept excluded until explicitly activated.
    * **Deleted / Retired Skills**: Obsolete or duplicate skills removed from disk.
 
 3. **Documentation Update**:
    Always update the project `README.md` to document the active skill profile and meta-skill hierarchy.
-
