@@ -152,7 +152,7 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `gemini_api_key` | API key for Google Gemini (required unless using WIF/ADC). | — |
 | `github_token` | GitHub token (`${{ secrets.GITHUB_TOKEN }}`). | — |
 | `command` | Action mode: `review` (PR review) or `triage` (Issue triage). | `'review'` |
-| `gemini_model` | Gemini model to use (recommended: `'gemini-4-hydrogen'`). | `'gemini-3.8-flash'` |
+| `gemini_model` | Gemini model to use (recommended: `'gemini-4-hydrogen'`). | `'gemini-4-hydrogen'` |
 | `persona` | Reviewer persona overlay (`straight`, `dazbo`, `palpatine`, `rick`). | `'straight'` |
 | `language` | Natural language for review output (e.g. `English (UK)`, `French`). | `'English (UK)'` |
 | `timeout` | API request timeout in seconds (LLM review client enforces a 300s minimum HTTP timeout floor and falls back to streaming on connection resets). | `'60'` |
