@@ -1,0 +1,57 @@
+---
+type: "Product Requirements"
+title: "[Project Name] — Product Requirements"
+description: "[One-sentence summary of the product vision, target users, and intended outcomes.]"
+status: "draft"
+---
+
+# Product Requirements: [Project Name]
+
+## Executive Summary & Vision
+
+[Concise summary of what this product is, who it serves, and the core value proposition. Keep strictly product-focused; omit package versions, API endpoints, and implementation architecture.]
+
+## Problem Statement
+
+[What concrete user pain point or opportunity exists, what happens without this product, and why solve it now?]
+
+## Target Users & Personas
+
+| Persona | Context | Core Need |
+| :--- | :--- | :--- |
+| **[Primary Persona]** | [Role or environment] | [What outcome they need to achieve] |
+| **[Secondary Persona]** | [Role or environment] | [What outcome they need to achieve] |
+
+## Goals & Success Metrics
+
+| Goal | Metric / Signal | Target |
+| :--- | :--- | :--- |
+| **[Goal 1]** | [Observable outcome or telemetry signal] | [Concrete measurable threshold] |
+| **[Goal 2]** | [Observable outcome or telemetry signal] | [Concrete measurable threshold] |
+
+## Feature Scope
+
+### MVP (In Scope)
+
+- **[Capability 1]**: [User-facing capability and value delivered.]
+- **[Capability 2]**: [User-facing capability and value delivered.]
+
+### Future Roadmap
+
+- **[Deferred Capability]**: [Planned enhancement beyond initial release.]
+
+## Core User Stories & Outcomes
+
+1. **[Story Title]**: As a **[Persona]**, I want to **[action]** so that **[measurable benefit]**.
+2. **[Story Title]**: As a **[Persona]**, I want to **[action]** so that **[measurable benefit]**.
+
+## Non-Goals (Out of Scope & Why)
+
+- **[Non-Goal 1]** — [Explicit rationale for excluding this capability now.]
+- **[Non-Goal 2]** — [Explicit rationale for excluding this capability now.]
+
+## Assumptions, Risks & Open Questions
+
+- **Assumption**: [Unvalidated product or user-behaviour assumption.]
+- **Risk & Mitigation**: [Product/adoption risk and how scope mitigates it.]
+- **Open Question**: [Unresolved product decision requiring owner input.]

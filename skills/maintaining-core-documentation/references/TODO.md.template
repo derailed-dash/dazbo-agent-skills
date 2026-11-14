@@ -1,6 +1,16 @@
-# Project Plan: [Project Name]
+# Project Roadmap & Backlog: [Project Name]
 
-- [x] [Completed Task] ([Date completed])
-- [~] [Current Task]
-- [ ] [Task]
-- [ ] [Task]
+[High-level feature backlog and milestone tracker. Granular per-task execution plans belong in `tasks/` or Conductor tracks.]
+
+## In Progress
+
+- [~] [Active milestone or initiative]
+
+## Planned Backlog
+
+- [ ] [Upcoming feature or improvement]
+- [ ] [Upcoming infrastructure or quality enhancement]
+
+## Completed
+
+- [x] [Completed milestone] ([YYYY-MM-DD])

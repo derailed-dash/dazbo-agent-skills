@@ -1,0 +1,42 @@
+---
+type: "Testing Strategy"
+title: "[Project Name] — Testing & Quality Assurance"
+description: "[One-sentence summary of static gates, automated test tiers, CI behaviour, and manual QA verification.]"
+status: "stable"
+---
+
+# Testing & Quality Assurance
+
+## Static Gates & Verification Tiers
+
+- **Static Quality Gates**: [e.g. `codespell`, `ruff check`, `ruff format --check`, `pyright` — run via `make lint` or `make check`.]
+- **Unit Tests**: [Fast, deterministic, offline tests mocking external APIs and persistence.]
+- **Integration & E2E Tests**: [Tests exercising live or emulated cloud services, containers, or full HTTP servers.]
+- **Frontend / Agent Evals**: [Component/UI test runners or ADK evaluation suites, where applicable.]
+
+## Local vs CI Execution
+
+- **CI Mode (`CI=true`)**: [Non-interactive execution, skipping local `.env` loading, watch mode disabled, log-optimised output.]
+- **Test Mode & Fixtures**: [Global `conftest.py` configuration, environment variable guards, and mock client/token patterns.]
+
+## Test Suite Inventory
+
+| File / Path | Tier | Scope & Behaviours Verified |
+| :--- | :--- | :--- |
+| `tests/unit/[test_file.py]` | Unit | [Core behaviours and edge cases verified] |
+| `tests/integration/[test_file.py]` | Integration | [External boundary or multi-component behaviour verified] |
+
+## Running Tests
+
+- **Full Offline Verification**: `make check`
+- **Unit Suite Only**: `make test`
+- **Unit + Integration**: `make test-all`
+- **Targeted File**: `uv run pytest -v tests/unit/[test_file.py]`
+
+## Manual QA & API Verification
+
+[Provide reproducible `curl` or CLI verification commands for behaviours that require manual or post-deploy checks, stating the expected HTTP status or output.]
+
+```bash
+curl -sS http://localhost:8000/api/health
+```

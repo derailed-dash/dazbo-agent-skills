@@ -1,0 +1,69 @@
+---
+type: "Architecture"
+title: "[Project Name] — System Architecture"
+description: "[One-sentence summary of the structural blueprint, design decisions, data models, and system topology.]"
+status: "stable"
+---
+
+# System Architecture: [Project Name]
+
+## Table of Contents
+
+- [Architectural Overview](#architectural-overview)
+- [Design Decisions (ADRs)](#design-decisions-adrs)
+- [Solution & Component Architecture](#solution--component-architecture)
+- [Runtime & Cloud Topology](#runtime--cloud-topology)
+- [Data Model & Persistence](#data-model--persistence)
+- [Cross-Cutting Concerns](#cross-cutting-concerns)
+- [Key System Lifecycles](#key-system-lifecycles)
+
+## Architectural Overview
+
+[Concise summary of the system's structural design, layering, and guiding architectural principles. Defer pinned package versions to [docs/SPEC.md](SPEC.md) and hands-on CLI/feature walkthroughs to [docs/GUIDE.md](GUIDE.md).]
+
+## Design Decisions (ADRs)
+
+*(If the repository maintains standalone ADR files under `docs/adr/` or `docs/decisions/`, link each row to its corresponding ADR file.)*
+
+| Decision | Status | Context & Rationale | Trade-offs |
+| :--- | :--- | :--- | :--- |
+| **[Decision Title]** | Accepted | [Why this option was chosen over alternatives] | [Known constraints or debt accepted] |
+
+## Solution & Component Architecture
+
+![Component Architecture](images/component-architecture.png)
+
+- **[Layer / Package 1]**: [Single responsibility and unidirectional dependencies.]
+- **[Layer / Package 2]**: [Single responsibility and dependency interfaces.]
+
+## Runtime & Cloud Topology
+
+![Runtime Architecture](images/runtime-architecture.png)
+
+[Describe how runtime services, databases, queues, and external integrations communicate in production. Defer Terraform layout, secrets propagation, and CI/CD procedures to [../deployment/README.md](../deployment/README.md).]
+
+## Data Model & Persistence
+
+[Overview of persistence stores, caching strategy, and identifier conventions.]
+
+### [Collection / Table Name]
+
+- **Identifier Format**: [e.g. `<prefix>:<slug>` or UUID]
+
+| Field | Type | Description | Source / Ownership |
+| :--- | :--- | :--- | :--- |
+| `[field_name]` | `[Type]` | [Purpose and constraints] | [Who writes/populates it] |
+
+## Cross-Cutting Concerns
+
+- **Configuration Loading**: [Centralised settings model, precedence between environment variables and `.env`.]
+- **Security & AuthZ Boundaries**: [Input validation, path/XSS defences, authentication enforcement, IAM boundary.]
+- **Rate Limiting & Resilience**: [Per-route limits, timeouts, retry/degradation strategy.]
+- **Observability**: [Structured logging, tracing, and telemetry sinks.]
+
+## Key System Lifecycles
+
+*(High-level component-to-component execution flows only; place user tutorials and CLI recipes in [docs/GUIDE.md](GUIDE.md).)*
+
+1. **[Primary Request / Event Flow]**: [Component A] -> [Component B] -> [Store / External Service] -> [Response].
+2. **[Background / Async Pipeline Flow]**: [Trigger] -> [Worker / Service] -> [Persistence].

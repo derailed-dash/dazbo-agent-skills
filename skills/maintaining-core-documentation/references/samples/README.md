@@ -1,228 +1,150 @@
 # dazbo-portfolio
 
-This is a development portfolio site. Its purpose is to showcase my blogs, projects and public code repos. But this repo and associated blog is a demonstration in building applications like this using Google agentic tools.
+This is a developer portfolio site designed to showcase technical blogs, applications, and public code repositories, while serving as a practical reference implementation built with Google agentic tooling.
 
-The portfolio site has:
+The portfolio platform provides:
 
-- React/Vite frontend
-- Python backend
-- Gemini Chatbot using Google ADK
-- Automated ingestion of content from blogs, GitHub, etc
-- AI-based content summarisation and metadata extraction
-- Dynamic SEO tag injection (SSR for SPA)
+- A React and Vite frontend served alongside a Python FastAPI backend
+- A Gemini conversational assistant powered by Google ADK
+- Automated multi-source ingestion of blogs, videos, and GitHub repositories
+- AI-powered technical summarisation and tag enrichment
+- Dynamic server-side SEO tag injection for Single Page Application (SPA) routes
 
-In includes Terraform IaC for deployment to Google Cloud, using:
-
-- Cloud Run for the containerised application
-- Google Firestore for storing ingested content, AI summaries and metadata
-- Google Cloud Storage for static assets, like website images
-- Google Secret Manager for sensitive content
+It includes Terraform Infrastructure as Code (IaC) and Cloud Build pipelines for serverless deployment to Google Cloud Run, Firestore, Cloud Storage, and Secret Manager.
 
 ## Repo Metadata
 
 - Author: Darren "Dazbo" Lester
-- Repo: https://github.com/derailed-dash/dazbo-portfolio
+- Repository: https://github.com/derailed-dash/dazbo-portfolio
 
 ## Table of Contents
 
 - [Key Project Documentation](#key-project-documentation)
 - [Key Links](#key-links)
 - [Project Structure](#project-structure)
-- [Architecture and Tech Stack - at a Glance](#architecture-and-tech-stack---at-a-glance)
+- [Architecture & Tech Stack — At a Glance](#architecture--tech-stack--at-a-glance)
 - [Quick Start: Working With This Repo](#quick-start-working-with-this-repo)
 - [Useful Commands](#useful-commands)
-- [Ingestion Tool](#ingestion-tool)
 - [Deployment](#deployment)
 
 ## Key Project Documentation
 
 | Document | Description |
-| --- | --- |
-| [README.md](README.md) | This file - the developer front door |
-| [TODO.md](TODO.md) | TODO list / feature backlog |
-| [docs/architecture-and-walkthrough.md](docs/architecture-and-walkthrough.md) | Architecture and walkthrough, including design decisions and data models |
-| [docs/DESIGN.md](docs/DESIGN.md) | UI design, visual identity, and frontend UI components |
-| [docs/testing.md](docs/testing.md) | Testing docs, including descriptions of all tests |
-| [deployment/README.md](deployment/README.md) | Deployment guidance, including Terraform, and CI/CD |
-| [GEMINI.md](GEMINI.md) | Guidance for Gemini or other LLMs |
+| :--- | :--- |
+| [README.md](README.md) | This file — the developer front door |
+| [TODO.md](TODO.md) | Project roadmap and feature backlog |
+| [docs/PRD.md](docs/PRD.md) | Product vision, target personas, metrics, and non-goals |
+| [docs/SPEC.md](docs/SPEC.md) | Technical specification, pinned locks, boundaries, and acceptance criteria |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, ADRs, component diagrams, and data models |
+| [docs/DESIGN.md](docs/DESIGN.md) | Visual identity, design tokens, UI components, and CLI UX |
+| [docs/TESTING.md](docs/TESTING.md) | Static gates, automated test suites, and manual QA verification |
+| [docs/GUIDE.md](docs/GUIDE.md) | Feature walkthroughs, ingestion CLI pipeline, and contributor codebase tour |
+| [deployment/README.md](deployment/README.md) | Infrastructure provisioning, secrets management, and CI/CD pipelines |
+| `GEMINI.md` | Repository guidance and verification rules for AI coding agents (when present) |
 
 ## Key Links
 
-- Check out the related [blog post](https://dev.to/gde/building-my-portfolio-site-in-2-days-using-gemini-cli-antigravity-conductor-and-agent-starter-3bke).
-- See the [portfolio site](https://darrenlester.net).
+- Read the accompanying [blog post](https://dev.to/gde/building-my-portfolio-site-in-2-days-using-gemini-cli-antigravity-conductor-and-agent-starter-3bke).
+- Visit the live [portfolio site](https://darrenlester.net).
 
 ## Project Structure
 
-```
+```text
 dazbo-portfolio/
-├── app/                       # Core agent code
-│   ├── agent.py               # Main agent logic
-│   ├── fast_api_app.py        # FastAPI Backend server
-│   └── app_utils/             # App utilities and helpers
-├── .cloudbuild/               # CI/CD pipeline configurations for Google Cloud Build
-├── conductor/                 # Conductor tracks
-├── deployment/                # Infrastructure and deployment scripts
-│   ├── terraform/             # Terraform configuration
-│   └── README.md              # Deployment documentation
-├── docs/                      # Project documentation
-├── frontend/                  # Frontend React application
-├── notebooks/                 # Jupyter notebooks for prototyping and evaluation
-├── scripts/                   # Convenience scripts, e.g. for environment setup
-├── tests/                     # Unit, integration, and load tests
-│   ├── unit/                  # Unit tests
-│   └── integration/           # Integration tests
-├── .env.template              # .env template file
-├── .envrc                     # Optional auto env configuration file
-├── GEMINI.md                  # Guidance for Gemini
-├── Makefile                   # Development commands
-├── pyproject.toml             # Project Python dependencies and configuration
+├── app/                       # Core backend and ADK agent code
+│   ├── agent.py               # Main Gemini ADK agent logic
+│   ├── fast_api_app.py        # FastAPI server and SPA origin
+│   ├── models/                # Pydantic schemas
+│   ├── services/              # Firestore and AI enrichment services
+│   └── tools/                 # Ingestion CLI and bespoke agent tools
+├── .cloudbuild/               # Google Cloud Build CI/CD pipeline definitions
+├── conductor/                 # Conductor project context and tracks
+├── deployment/                # Infrastructure and deployment automation
+│   ├── terraform/             # Terraform IaC configuration
+│   └── README.md              # Deployment and CI/CD guide
+├── docs/                      # Project documentation (PRD, SPEC, ARCHITECTURE, DESIGN, TESTING, GUIDE)
+├── frontend/                  # React + Vite TypeScript frontend
+├── notebooks/                 # Prototyping and evaluation notebooks
+├── scripts/                   # Local environment and helper scripts
+├── tests/                     # Automated test suites
+│   ├── unit/                  # Offline unit tests
+│   └── integration/           # Service and end-to-end integration tests
+├── .env.template              # Sanitised environment variable template
+├── .envrc                     # Optional direnv environment loader
+├── GEMINI.md                  # Guidance for Gemini and coding agents
+├── Makefile                   # Self-documenting project automation targets
+├── pyproject.toml             # Python dependencies and static gate configuration
 ├── README.md                  # This file
-└── TODO.md                    # TODO list
+└── TODO.md                    # High-level roadmap and backlog
 ```
 
-## Architecture and Tech Stack - at a Glance
+## Architecture & Tech Stack — At a Glance
 
-| Component / Pattern | Details |
+| Component / Pattern | Summary |
 | :--- | :--- |
 | **Frontend** | React 19, TypeScript, Vite, Glassmorphism UI |
-| **Backend** | Python 3.12, FastAPI, Pydantic v2 |
-| **AI / Agent** | Google ADK, Gemini 3, `google-genai` SDK |
-| **Database** | Google Firestore (Native Mode) |
+| **Backend** | Python 3.13, FastAPI, Pydantic v2 |
+| **AI / Agent** | Google ADK, Gemini 4 (`gemini-4-hydrogen`), `google-genai` SDK |
+| **Persistence** | Google Firestore (Native Mode) and Cloud Storage (GCS) |
 | **Infra / DevOps** | Terraform (IaC), Cloud Build (CI/CD), Docker, `uv` |
-| **Unified Origin** | Single FastAPI backend serving both REST API and React SPA |
-| **Hybrid Agent Tooling** | Managed Firestore MCP + bespoke Python tools for discovery and ranking |
-| **Serverless Foundation** | Fully managed GCP deployment via Cloud Run and Firestore |
-| **Automated Ingestion** | CLI harvesting tool with AI-powered enrichment for GitHub, Medium, and Dev.to |
+| **Unified Origin** | Single FastAPI service serving both `/api/*` endpoints and the React SPA |
+| **Hybrid Agent Tooling** | Managed Firestore MCP + bespoke Python discovery and counting tools |
+| **Automated Ingestion** | Out-of-band CLI pipeline harvesting GitHub, Medium, Dev.to, and manual YAML |
 
-For a deep dive into implementation, see [docs/architecture-and-walkthrough.md](docs/architecture-and-walkthrough.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for architectural rationale, diagrams, and schemas, and [docs/SPEC.md](docs/SPEC.md) for pinned SDK and model locks.
 
 ## Quick Start: Working With This Repo
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed and configured:
-
-- **Python 3.12+**
-- **[uv](https://docs.astral.sh/uv/)**: Fast Python package and environment management.
-- **[Google Cloud CLI (gcloud)](https://cloud.google.com/sdk/docs/install)**: For interacting with Google Cloud services.
-- **[Terraform](https://developer.hashicorp.com/terraform/downloads)**: For infrastructure as code.
-- **[Docker](https://docs.docker.com/get-docker/)**: For building and running unified container images. (It is not essential, but useful for local testing.)
-- **[GNU Make](https://www.gnu.org/software/make/)**: For running automated development tasks. (Though you can always run the commands manually.)
+- **Python 3.13+**
+- **[uv](https://docs.astral.sh/uv/)**: Fast Python package and virtual environment management.
+- **[Google Cloud CLI (`gcloud`)](https://cloud.google.com/sdk/docs/install)**: For GCP authentication and project targeting.
+- **[Terraform](https://developer.hashicorp.com/terraform/downloads)**: For provisioning cloud infrastructure.
+- **[Docker](https://docs.docker.com/get-docker/)**: Optional, for building and verifying the unified container locally.
+- **[GNU Make](https://www.gnu.org/software/make/)**: For running standardised development and verification targets.
 
 ### One-Time Setup
 
-1. Create a Google Cloud project and attach a billing account.
-2. Enable the required APIs.
+1. Create a Google Cloud project and link an active billing account.
+2. Enable the required Google Cloud APIs (`run.googleapis.com`, `firestore.googleapis.com`, `aiplatform.googleapis.com`, `cloudbuild.googleapis.com`, `secretmanager.googleapis.com`, `storage.googleapis.com`, `artifactregistry.googleapis.com`, `logging.googleapis.com`, `cloudtrace.googleapis.com`).
+3. Copy `.env.template` to `.env` (or unlock `.env.enc` via `git-crypt`) and configure your project values and Gemini API key.
+4. Create the Native-mode Firestore database (if not provisioning via Terraform):
 
     ```bash
-    gcloud services enable --project=$GOOGLE_CLOUD_PROJECT \
-      artifactregistry.googleapis.com \
-      cloudbuild.googleapis.com \
-      secretmanager.googleapis.com \
-      run.googleapis.com \
-      logging.googleapis.com \
-      aiplatform.googleapis.com \
-      serviceusage.googleapis.com \
-      storage.googleapis.com \
-      cloudtrace.googleapis.com \
-      geminicloudassist.googleapis.com \
-      firestore.googleapis.com
-    ```
-
-3. Create your API key, e.g. at https://aistudio.google.com/api-keys
-
-4. Set up Firestore.
-
-    ```bash
-    # If NOT using Terraform
     gcloud firestore databases create --location=europe-west1 --type=firestore-native
     ```
 
-5. (Optional) If you plan to deploy manually from your local machine using `make deploy-cloud-run`, grant your user account the `iam.serviceAccountUser` role on the application Service Account.
+### Per Dev Session
 
-    ```bash
-    gcloud iam service-accounts add-iam-policy-binding dazbo-portfolio-app@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-      --member="user:$(gcloud config get-value account)" \
-      --role="roles/iam.serviceAccountUser"
-    ```
-
-### Per Dev Session (Once One-Time Setup Tasks Have Been Completed)
-
-**DO THIS STEP BEFORE EACH DEV SESSION**
-
-To configure your shell for a development session, **source** the `scripts/setup-env.sh` script. This will handle authentication, set the correct Google Cloud project, install dependencies, and activate the Python virtual environment.
+Source the environment setup script before starting local servers or running cloud tests:
 
 ```bash
 source scripts/setup-env.sh [--noauth]
 ```
 
-### Using Direnv
-
-Note that you can automate loading the `setup-env.sh` script by installing [direnv](https://direnv.net/), and then including the `.envrc` in the project folder. E.g.
-
-```bash
-sudo apt install direnv
-
-# Add eval "$(direnv hook bash)" to your .bashrc
-echo "eval \"\
-$(direnv hook bash)\"" >> ~/.bashrc
-
-# Then, from this project folder:
-direnv allow
-```
+If using [direnv](https://direnv.net/), run `direnv allow` once at the repository root to load `.envrc` automatically.
 
 ## Useful Commands
 
-| Command                 | Description                                                   |
-| ----------------------- | ------------------------------------------------------------- |
-| `make install`          | Install dependencies using uv                                 |
-| `make playground`       | Launch local development environment using ADK Web UI. (Select the `app` folder when prompted) |
-| `make lint`             | Run code quality checks                                       |
-| `make test`             | Run unit and integration tests                                |
-| `make deploy-cloud-run` | Deploy agent to Cloud Run                                     |
-| `make local-backend`    | Launch local development server with hot-reload               |
-| `make react-ui`         | Launch React frontend development server                      |
-| `make ui-test`          | Run frontend UI tests                                         |
-| `make docker-build`     | Build the unified production container image                  |
-| `make docker-run`       | Run the unified container locally                             |
-| `make tf-plan`          | Plan Terraform deployment                                     |
-| `make tf-apply`         | Deploy environment resources using Terraform                  |
-| `uv run python -m app.tools.ingest` | Run ingestion tool                                |
+| Command | Description |
+| :--- | :--- |
+| `make help` | Display all available Makefile targets |
+| `make install` | Install Python and frontend dependencies |
+| `make check` | Run offline static gates (`codespell`, `ruff`, `pyright`) and unit tests |
+| `make test` | Run backend unit and integration tests |
+| `make ui-test` | Run frontend Vitest and React Testing Library checks |
+| `make local-backend` | Launch local FastAPI development server with hot reload |
+| `make react-ui` | Launch Vite frontend development server with `/api` proxy |
+| `make playground` | Launch local ADK Web UI for interactive agent debugging |
+| `make docker-build` | Build the unified production container image |
+| `make docker-run` | Run the unified container locally on `http://localhost:8080` |
+| `uv run python -m app.tools.ingest --simulate` | Preview content ingestion changes without writing to Firestore |
 
-Many common tasks have been automated using `make`. If you work in an environment that doesn't support `make`, you can find the equivalent commands in the [Makefile](Makefile).
-
-### Ingestion Tool
-
-The ingestion tool supports a `--simulate` flag. Use `uv run python -m app.tools.ingest --simulate [OPTIONS]` to perform a dry run without modifying the Firestore database. This mode will print before and after snapshots showing exactly what actions would be performed.
+For full CLI flags, dry-run recipes, and `manual_resources.yaml` usage, see [docs/GUIDE.md](docs/GUIDE.md).
 
 ## Deployment
 
-### Dev Environment
+Infrastructure is provisioned declaratively with Terraform (Cloud Run service shell, Firestore, GCS, IAM, and Cloud Build triggers), whilst Cloud Build compiles the unified container image and rolls out new revisions automatically on GitHub pushes.
 
-You can test deployment towards a Dev Environment using the following command:
-
-```bash
-gcloud config set project <your-dev-project-id>
-make deploy-cloud-run
-```
-
-The repository includes a Terraform configuration for the setup of the Dev Google Cloud project.
-See [deployment/README.md](deployment/README.md) for instructions.
-
-### Running in a Local Container
-
-The application is unified into a single container image. To build and run it:
-
-```bash
-# Build the image
-make docker-build
-
-# Run the container (includes credential mounting for Firestore access)
-make docker-run
-```
-
-Access the application at `http://localhost:8080`. The container implementation uses a hybrid SSR/SPA approach to inject SEO tags dynamically on the first request, ensuring optimal crawling and social previews.
-
-### Production Deployment
-
-The repository includes a Terraform configuration for the setup of a production Google Cloud project. Refer to [deployment/README.md](deployment/README.md) for detailed instructions on how to deploy the infrastructure and application.
+See [deployment/README.md](deployment/README.md) for Terraform instructions, variable propagation, secrets handling, and CI/CD pipeline details.

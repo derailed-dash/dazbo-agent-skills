@@ -1,0 +1,41 @@
+---
+type: "Usage Guide"
+title: "[Project Name] — Usage Guide & Codebase Walkthrough"
+description: "[One-sentence summary of hands-on feature walkthroughs, CLI pipelines, and contributor codebase tour.]"
+status: "stable"
+---
+
+# Usage Guide & Codebase Walkthrough
+
+*(Persistent user and contributor walkthrough. Distinct from ephemeral per-task `walkthrough.md` session artefacts.)*
+
+## Overview
+
+[Brief orientation explaining what workflows this guide covers and linking to [README.md](../README.md) for initial setup.]
+
+## Feature Walkthroughs
+
+### 1. [Primary User Workflow]
+
+1. [Starting condition or user action.]
+2. [Concrete inputs, expected UI/API response, and observable result.]
+
+## CLI & Operational Workflows
+
+[Document non-trivial application CLI tools, flags, dry-run/simulation modes, and configuration file schemas (e.g. YAML/JSON import formats).]
+
+```bash
+[Executable CLI example with representative flags]
+```
+
+## Contributor Codebase Tour
+
+[Guide contributors from entrypoints through domain services, models, and tests so they know where to make changes.]
+
+- **[Entrypoint / Route Layer]**: [`path/to/app.py`](../path/to/app.py) — [What lives here and how requests enter.]
+- **[Domain / Service Layer]**: [`path/to/services/`](../path/to/services/) — [Where core business rules and abstractions live.]
+- **[How to Add a New Feature / Extension]**: [Concise checklist of files to create or register.]
+
+## Troubleshooting & Common Recipes
+
+- **[Symptom or Common Error]**: [Root cause and exact command or fix.]

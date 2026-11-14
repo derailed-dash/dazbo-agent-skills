@@ -1,0 +1,50 @@
+# Deployment & Infrastructure
+
+## Overview
+
+[Summarise the deployment model — e.g. Terraform IaC paired with Cloud Build or GitHub Actions — and link to [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for runtime topology rather than duplicating architecture prose.]
+
+## Infrastructure Directory Structure
+
+```text
+deployment/
+├── terraform/                 # Declarative IaC definitions
+│   ├── vars/
+│   │   └── env.tfvars         # Environment-specific variable values
+│   ├── apis.tf                # Required cloud API enablement
+│   ├── iam.tf                 # Service account and IAM bindings
+│   ├── providers.tf           # Provider and backend state configuration
+│   ├── service.tf             # Primary compute/service definitions
+│   └── variables.tf           # Input variable declarations
+└── README.md                  # This file
+```
+
+## Configuration, Secrets & Variable Propagation
+
+- **IaC -> Pipeline -> Runtime**: [Explain how variables flow from `.tfvars` through CI/CD substitutions or workflow inputs into runtime environment variables.]
+- **Secrets Management**: [Explain `.env.template`, `.env`, encrypted `.env.enc` via `git-crypt`, and secret store bindings (e.g. Secret Manager / GitHub Actions secrets).]
+- **Makefile Environment Overrides**: [Note that `Makefile` sources `.env.template` then `.env` dynamically; always use unambiguous variable names such as `SERVICE_NAME ?=` rather than `NAME` or `LANG` (which collide with OS host variables).]
+
+## Prerequisites
+
+- [Required CLIs (`gcloud`, `terraform`, `gh`), cloud authentication (`gcloud auth application-default login`), and remote Terraform state bucket setup.]
+
+## Provisioning & Deployment Commands
+
+### Infrastructure (Terraform)
+
+```bash
+make tf-plan
+make tf-apply
+```
+
+### Application Deployment
+
+```bash
+[Script or make command to build and deploy the application]
+```
+
+## CI/CD Pipelines & Security Controls
+
+- **Automated Workflows**: [Describe PR checks, build triggers, Workload Identity Federation / keyless auth, and deploy workflows.]
+- **Security Controls**: [Least-privilege service accounts, deletion protection, private ingress / IAP settings, and manual API enablement prerequisites.]

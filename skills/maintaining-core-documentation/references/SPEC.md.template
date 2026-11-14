@@ -1,0 +1,76 @@
+---
+type: "Technical Specification"
+title: "[Project / Feature Name] — Technical Specification"
+description: "[One-sentence summary of the behavioural contract, pinned locks, and falsifiable acceptance criteria.]"
+status: "draft"
+# verified: { by: "human:<id>", at: "YYYY-MM-DDTHH:MM:SSZ" }
+# sources:
+#   - id: prd
+#     resource: PRD.md
+#     title: Product Requirements Document
+---
+
+# Technical Specification: [Project / Feature Name]
+
+## Objective & Scope
+
+[2–3 sentences stating the technical objective and linking to [docs/PRD.md](PRD.md) for product rationale. Expand user/business context here only if no `PRD.md` exists.]
+
+## Capability Map
+
+*(Optional — include ONLY when decomposing multiple independently testable modules before per-module specification. Delete this section for single-capability projects.)*
+
+| Module ID | Responsibility | Depends On |
+| :--- | :--- | :--- |
+| `[module-a]` | [Core responsibility] | — |
+| `[module-b]` | [Dependent responsibility] | `[module-a]` |
+
+Build order: `[module-a]` -> `[module-b]`
+
+## Explicit Assumptions
+
+1. [Assumption about runtime environment, auth mechanism, or data shape.]
+2. [Assumption about backwards compatibility or external dependencies.]
+
+## Functional Requirements
+
+| ID | Requirement | Input / Trigger | Expected Behaviour & Output |
+| :--- | :--- | :--- | :--- |
+| `FR-1` | **[Requirement Name]** | [Endpoint, CLI command, or event] | [Deterministic observable behaviour] |
+| `FR-2` | **[Requirement Name]** | [Endpoint, CLI command, or event] | [Deterministic observable behaviour] |
+
+## Non-Functional Requirements
+
+- **Security**: [Input validation, path traversal/XSS guards, secret handling, auth boundary.]
+- **Performance & Scalability**: [Latency budgets, rate limits, concurrency or statelessness constraints.]
+- **Reliability & Offline Testability**: [Deterministic fallbacks, timeout/retry behaviour, offline unit-test isolation.]
+
+## Tech Stack, SDK & Model Locks
+
+*(Canonical source of truth for pinned runtime, framework, SDK, and AI model identifiers.)*
+
+| Layer | Technology / Package | Pinned Version / Identifier | Notes |
+| :--- | :--- | :--- | :--- |
+| **Language** | [e.g. Python] | `>= 3.13` | [Toolchain e.g. `uv`] |
+| **Backend / API** | [e.g. FastAPI] | [Version / constraint] | [Contract notes] |
+| **AI SDK & Model** | [e.g. `google-genai`] | [e.g. `>= 2.30.1`, `gemini-4-hydrogen`] | [API mode / constraints] |
+
+## Operational Boundaries
+
+- **Always Do**: [Mandatory invariants, e.g. run `make check`, validate untrusted inputs, preserve contracts.]
+- **Ask First**: [Actions requiring explicit approval, e.g. new dependencies, schema changes, deployments.]
+- **Never Do**: [Hard prohibitions, e.g. commit plaintext secrets, silently swallow errors, downgrade pinned models.]
+
+## Acceptance Criteria & Verification Rubric
+
+*(Binary pass/fail assertions verified via automated checks; see [docs/TESTING.md](TESTING.md) for suite layout and execution details.)*
+
+| ID | Falsifiable Condition | Verification Target |
+| :--- | :--- | :--- |
+| `B1` | [Observable condition that must hold true] | [e.g. `make check` / `pytest tests/unit/...`] |
+| `B2` | [Observable condition that must hold true] | [e.g. `make ui-test` / `curl` check] |
+
+## Out of Scope & Open Questions
+
+- **Out of Scope**: [Technical capabilities explicitly excluded from this specification.]
+- **Open Questions**: [Unresolved technical contracts awaiting owner decision.]

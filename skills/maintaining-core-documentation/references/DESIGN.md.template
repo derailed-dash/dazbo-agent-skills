@@ -1,0 +1,82 @@
+---
+type: "Design System"
+title: "[Project Name] — Visual Design & UX Guidelines"
+description: "[High-level summary of the design system's visual identity, tokens, and UX standards.]"
+status: "stable"
+version: "1.0"
+name: "[Project Name]"
+colors:
+  primary: "#1A1C1E"
+  secondary: "#000000"
+  tertiary: "#FFFFFF"
+  surface: "#F5F5F5"
+  background: "#FFFFFF"
+  error: "#B3261E"
+  on-primary: "#FFFFFF"
+  on-surface: "#000000"
+typography:
+  display-lg:
+    fontFamily: "[Primary font, e.g., Inter]"
+    fontSize: "57px"
+    fontWeight: 400
+    lineHeight: "64px"
+    letterSpacing: "-0.25px"
+  body-md:
+    fontFamily: "[Primary font, e.g., Inter]"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: "24px"
+    letterSpacing: "0.5px"
+rounded:
+  sm: "4px"
+  md: "8px"
+  lg: "16px"
+  full: "9999px"
+spacing:
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+components:
+  # Component-specific overrides and token mappings
+---
+
+# Visual Design & UX Guidelines
+
+This document serves as the single source of truth for the visual identity, design tokens, and user experience.
+
+## Overview
+
+[Holistic description of the brand personality, target audience, and intended visual tone.]
+
+## Colours
+
+[Rationale for the colour palette. Token keys in YAML frontmatter follow the Google Stitch schema; prose descriptions should use human-friendly names.]
+
+## Typography
+
+[Guidelines for font hierarchy, heading vs body text usage, and accessibility contrast/sizing considerations.]
+
+## Layout
+
+[Rules for grid structure, alignment, responsive breakpoints, and application of spacing tokens.]
+
+## Elevation & Depth
+
+[Specification of shadow systems, tonal layers, borders, and visual hierarchy.]
+
+## Shapes
+
+[Descriptions of corner treatments and edge language referenced via the `rounded` tokens.]
+
+## Components
+
+[High-level rationale for core UI components and any component-specific token overrides.]
+
+## Do's and Don'ts
+
+- **Do**: [Concrete guidance on correct usage.]
+- **Don't**: [Concrete anti-patterns to avoid.]
+
+## Development CLI UX
+
+[Detail console visual feedback — e.g. `rich` spinners, progress bars, tables, and colour semantics — if the project includes a CLI.]

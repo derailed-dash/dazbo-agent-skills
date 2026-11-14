@@ -1,6 +1,6 @@
 # [Project Name]
 
-[Short, compelling description of the project's purpose and what it builds/achieves.]
+[Short, compelling description of the project's purpose and what it builds or achieves.]
 
 ## Repo Metadata
 
@@ -9,83 +9,95 @@
 
 ## Table of Contents
 
-[Include links to internal page headings.]
+- [Key Project Documentation](#key-project-documentation)
+- [Key Links](#key-links)
+- [Project Structure](#project-structure)
+- [Architecture & Tech Stack — At a Glance](#architecture--tech-stack--at-a-glance)
+- [Quick Start: Working With This Repo](#quick-start-working-with-this-repo)
+- [Useful Commands](#useful-commands)
+- [Deployment](#deployment)
 
 ## Key Project Documentation
 
-[Provide a table with links to key documentation within the project]
-
-Example:
+[Omit rows for optional documents not used in this repository.]
 
 | Document | Description |
-| --- | --- |
-| [README.md](README.md) | This file - the developer front door |
-| [TODO.md](TODO.md) | TODO list / feature backlog |
-| [docs/architecture-and-walkthrough.md](docs/architecture-and-walkthrough.md) | Architecture and walkthrough, including design decisions and data models |
-| [docs/DESIGN.md](docs/DESIGN.md) | UI design, visual identity, and frontend UI components |
-| [docs/testing.md](docs/testing.md) | Testing docs, including descriptions of all tests |
-| [deployment/README.md](deployment/README.md) | Deployment guidance, including Terraform, and CI/CD |
-| [GEMINI.md](GEMINI.md) | Guidance for Gemini or other LLMs |
+| :--- | :--- |
+| [README.md](README.md) | This file — the developer front door |
+| [TODO.md](TODO.md) | Project roadmap and feature backlog |
+| [docs/PRD.md](docs/PRD.md) | Product vision, personas, metrics, and non-goals |
+| [docs/SPEC.md](docs/SPEC.md) | Technical specification, pinned locks, boundaries, and acceptance criteria |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, ADRs, component diagrams, and data models |
+| [docs/DESIGN.md](docs/DESIGN.md) | Visual design tokens, UI components, and CLI UX |
+| [docs/TESTING.md](docs/TESTING.md) | Static gates, automated test suites, and manual QA checks |
+| [docs/GUIDE.md](docs/GUIDE.md) | Feature walkthroughs, CLI pipelines, and contributor codebase tour |
+| [deployment/README.md](deployment/README.md) | Infrastructure provisioning, secrets management, and CI/CD pipelines |
+| [AGENTS.md](AGENTS.md) | Repository rules and verification guardrails for AI coding agents |
 
 ## Key Links
 
-[Bullet list of links to key material, API references, related blogs, etc]
+- [Related blog post, RFC, or live demo URL]
 
 ## Project Structure
 
-[This is a sample representation. Check the actual repository to determine the structure. Shows directories first.]
-
-Example:
+[Verify against the actual repository layout; list directories before root files.]
 
 ```text
-[Project Root]/
-├── deployment/                # Infrastructure and deployment scripts
-│   ├── terraform/             # Terraform configuration
-│   └── README.md              # Deployment documentation
-├── docs/                      # Documentation
-├── app/                       # Backend code
-├── frontend/                  # Frontend code
-├── tests/                     # Unit, integration, and load tests
-│   ├── unit/                  # Unit tests
-│   └── integration/           # Integration tests
-├── .env.template              # .env template file
-├── pyproject.toml             # Project Python dependencies and configuration
+[project-root]/
+├── app/                       # Application source code
+├── deployment/                # Infrastructure as Code and deployment scripts
+│   └── README.md              # Deployment and CI/CD documentation
+├── docs/                      # Project documentation (PRD, SPEC, ARCHITECTURE, etc.)
+├── scripts/                   # Development and environment helper scripts
+├── tests/                     # Automated test suites
+│   ├── unit/                  # Fast offline unit tests
+│   └── integration/           # Cloud or external service integration tests
+├── .env.template              # Sanitised environment variable template
+├── AGENTS.md                  # Agent conventions and guardrails
+├── Makefile                   # Self-documenting project automation targets
+├── pyproject.toml             # Project dependencies and static tool configuration
 ├── README.md                  # This file
-└── TODO.md                    # TODO list
+└── TODO.md                    # High-level roadmap and backlog
 ```
 
-## Architecture and Tech Stack - at a Glance
+## Architecture & Tech Stack — At a Glance
 
-[Brief summary of the key technologies used and the overall architecture. 
-Point to the `architecture-and-walkthrough.md` for further details.]
+[Summarise headline components and patterns in a compact table. Defer design rationale and diagrams to `docs/ARCHITECTURE.md`, and pinned SDK/model versions to `docs/SPEC.md`.]
+
+| Component / Pattern | Summary |
+| :--- | :--- |
+| **Runtime / Backend** | [e.g. Python, FastAPI] |
+| **Frontend / CLI** | [e.g. React, Vite, or Rich CLI] |
+| **AI / Agent Layer** | [e.g. Google ADK, Gemini API] |
+| **Persistence** | [e.g. Google Firestore, Cloud Storage] |
+| **Deployment** | [e.g. Terraform + Cloud Run] |
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for architectural rationale and diagrams, and [docs/SPEC.md](docs/SPEC.md) for pinned dependency and model locks.
 
 ## Quick Start: Working With This Repo
 
-[Provide details on how to setup and run locally. 
-If deployment instructions are in deployment.md, then simply reference it, as required.
-This section should include:
-- any APIs that must be enabled (e.g. for a project using Google Cloud)
-- any APIs keys required
-- any environment configuration
-- any roles that are needed
-- any service accounts that are required
-]
-
-Optional sub-sections include:
-
 ### Prerequisites
 
-[A list of tools required to work with this repo, e.g. `uv`, `gcloud`, `terraform`]
+- [List required local tools, e.g. `uv`, `gcloud`, `terraform`, `make`]
 
 ### One-Time Setup
 
-[E.g. project creation, API enablement]
+1. [Project creation or cloning instructions.]
+2. [Required API enablement, secret setup, or `cp .env.template .env`.]
 
 ### Per Dev Session
 
-[E.g. running any scripts to setup dev environment; loading of any env vars]
+1. [Commands to activate the environment, authenticate, or start local services.]
 
 ## Useful Commands
 
-[In a table, list useful commands, scripts and tools. E.g. any make commands or setup bash scripts.]
+| Command | Description |
+| :--- | :--- |
+| `make help` | List all available Makefile targets |
+| `make install` | Install project and development dependencies |
+| `make check` | Run offline static gates and unit tests |
+| `make test` | Run fast offline unit tests |
 
+## Deployment
+
+[Provide a 3–4 line headline overview of how environments are provisioned and deployed. Defer Terraform structure, variable propagation, and CI/CD procedures to [deployment/README.md](deployment/README.md).]
