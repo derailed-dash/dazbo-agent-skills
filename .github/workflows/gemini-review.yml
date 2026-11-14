@@ -14,9 +14,9 @@ on:
 
 jobs:
   review:
-    # Run on PR updates, OR on issue comment starting with /gemini-review by repo owners/members
+    # Run on internal PR updates (same repo), OR on issue comment starting with /gemini-review by repo owners/members
     if: |
-      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       (
         github.event_name == 'issue_comment' &&
         github.event.issue.pull_request &&
@@ -24,6 +24,13 @@ jobs:
         contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
       )
     runs-on: ubuntu-latest
+
+    # Cancel in-flight review on the same PR when a new commit or /gemini-review comment arrives.
+    # Keep concurrency at the job level (not workflow level) so unrelated PR comments don't cancel active runs.
+    concurrency:
+      group: gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+
     permissions:
       contents: read
       pull-requests: write
@@ -44,7 +51,7 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.8-flash'
+          gemini_model: 'gemini-4-hydrogen'
           persona: 'palpatine'
           language: 'English (UK)'
           include_comment_history: 'true'

@@ -27,7 +27,7 @@ This skill provides a structured workflow for installing, configuring, and upgra
 This skill MUST trigger whenever:
 - The user requests to install, configure, or upgrade `gemini-review-action` or a Gemini-based PR code review workflow.
 - The user asks for automated code reviews or issue triaging on GitHub.
-- The user asks to upgrade model versions in existing review workflows (e.g. from `gemini-3.5-flash` to `gemini-3.8-flash`).
+- The user asks to upgrade model versions in existing review workflows (e.g. from `gemini-3.8-flash` or `gemini-3.6-flash` to `gemini-4-hydrogen`).
 - The user asks to add custom reviewer personalities (such as Dazbo, Emperor Palpatine, or Rick Sanchez) or custom review guardrails (`.github/review-instruction-additions.md`) to their automated PR reviews.
 
 ## Installation & Upgrade Workflow
@@ -49,7 +49,7 @@ Before writing or modifying any GitHub workflow files, inspect the `.github/work
 
 1. **Check for existing `gemini-review-action` workflows**:
    - Inspect `.github/workflows/gemini-review.yml` or `.github/workflows/gemini-triage.yml`.
-   - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.6-flash`, `gemini-2.5-flash`, or `gemini-1.5-flash`), inform the user and **offer to upgrade the model to `gemini-3.8-flash`**.
+   - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-2.5-flash`, or `gemini-1.5-flash`), inform the user and **offer to upgrade the model to `gemini-4-hydrogen`**.
    - Check if a `persona` input is specified. If missing or set to `straight`, **offer to add one of the custom reviewer personalities** (`dazbo`, `palpatine`, or `rick`).
    - Check if job-level `concurrency` is configured on the `review` job (prevents redundant billed calls on rapid bursts of commits).
    - Check if the `pull_request` trigger condition guards against external fork PRs (`github.event.pull_request.head.repo.full_name == github.repository`) so fork PRs don't fail due to missing repository secrets.
@@ -68,7 +68,7 @@ Ask the user:
    - **Both** (recommended)
 
 2. **Gemini Model**:
-   - **`gemini-3.8-flash`** (Default & recommended — fast, cost-efficient, native structured JSON output, multimodal visual diffing, and 90% discount context caching support).
+   - **`gemini-4-hydrogen`** (Default & recommended — fast, cost-efficient Gemini 4 daily driver with 1M unified context, configurable `thinking_level` up to `xhigh`, native structured JSON output, multimodal visual diffing, and automatic 95% discount implicit context caching).
    - Offer model upgrade if an older model was detected in Step 1.
 
 3. **Reviewer Personality / Persona**:
@@ -93,7 +93,7 @@ Ask the user:
 Create or update workflow files in `.github/workflows/` incorporating all chosen preferences from Step 2.
 
 Ensure the workflow specifies:
-- `gemini_model: 'gemini-3.8-flash'`
+- `gemini_model: 'gemini-4-hydrogen'`
 - `persona: '<chosen_persona>'` (e.g. `straight`, `dazbo`, `palpatine`, or `rick`)
 - `language: '<chosen_language>'` (e.g. `English (UK)`)
 - Job-level `concurrency` group keyed on the PR number (`gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}`).
@@ -152,7 +152,7 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `gemini_api_key` | API key for Google Gemini (required unless using WIF/ADC). | — |
 | `github_token` | GitHub token (`${{ secrets.GITHUB_TOKEN }}`). | — |
 | `command` | Action mode: `review` (PR review) or `triage` (Issue triage). | `'review'` |
-| `gemini_model` | Gemini model to use. | `'gemini-3.8-flash'` |
+| `gemini_model` | Gemini model to use (recommended: `'gemini-4-hydrogen'`). | `'gemini-3.8-flash'` |
 | `persona` | Reviewer persona overlay (`straight`, `dazbo`, `palpatine`, `rick`). | `'straight'` |
 | `language` | Natural language for review output (e.g. `English (UK)`, `French`). | `'English (UK)'` |
 | `timeout` | API request timeout in seconds (LLM review client enforces a 300s minimum HTTP timeout floor and falls back to streaming on connection resets). | `'60'` |
@@ -161,7 +161,7 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `resolve_addressed_threads` | Auto-resolve review threads marked addressed (requires PAT/App token). | `'false'` |
 | `exclude_comment_authors` | Comma-separated logins excluded from comment history (e.g. `claude[bot]`). | `''` |
 | `custom_instructions` | Inline text or path to custom review guardrails markdown file. | `'.github/review-instruction-additions.md'` |
-| `thinking_level` | Optional reasoning level (`low`, `high`, `none`, or token budget). | `''` |
+| `thinking_level` | Optional reasoning level (`low`, `medium`, `high`, `xhigh` on `gemini-4-hydrogen`, `none`, or token budget on Gemini 3). | `''` |
 | `billing_labels` | Extra Cloud Billing `key=value` labels (Vertex AI / WIF only). | `''` |
 | `extra_context_files` | Comma-separated static files always attached to codebase context. | `''` |
 | `max_candidate_files` | Max candidate files considered during dynamic sparse context selection. | `'500'` |
@@ -230,7 +230,7 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.8-flash'
+          gemini_model: 'gemini-4-hydrogen'
           language: 'English (UK)'           # Optional (e.g. English (UK), French, Spanish)
           persona: 'straight'                # Optional: straight (default), dazbo, palpatine, rick
           # timeout: '60'                     # Optional API timeout in seconds
@@ -266,7 +266,7 @@ jobs:
           command: 'triage'
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: 'gemini-3.8-flash'
+          gemini_model: 'gemini-4-hydrogen'
           language: 'English (UK)'           # Optional (e.g. English (UK), French, Spanish)
           # timeout: '60'                     # Optional API timeout in seconds
 ```
