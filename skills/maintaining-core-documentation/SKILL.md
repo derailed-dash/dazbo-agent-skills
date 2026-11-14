@@ -46,8 +46,6 @@ Activate this skill whenever:
 3. **Tier 3 — Samples Strictly as Greenfield Exemplars**:
    - Read files under `./references/samples/` **only** when authoring a substantial greenfield document that requires an exemplar for depth, tone, or YAML token schema (e.g. Stitch tokens in `DESIGN.md` or ADR tables in `ARCHITECTURE.md`).
    - **Never** read sample files during routine documentation synchronisation.
-4. **Passive `technical-writer` Synergy**:
-   - If the `technical-writer` skill is already installed/loaded locally and you are drafting substantial new user-facing prose or guides from scratch, apply its clarity and scannability principles. Do **not** run `npx skills` shell checks or load it for minor table/checkbox edits.
 
 ## Core Principles & Anti-Redundancy
 
@@ -55,6 +53,7 @@ Activate this skill whenever:
 2. **Single Source of Truth (Minimal Overlap)**: Every fact has **one canonical owner**; cross-link rather than copying version tables, command recipes, or deployment steps across files. Root `README.md` is the sole intentional front-door exception summarising headline stack/commands and linking into `docs/` and `deployment/`.
 3. **Verify Against Ground Truth**: Never assume existing docs are current. Verify paths, flags, dependencies, environment variables, and models directly against code, `pyproject.toml`, `package.json`, `Makefile`, `*.tfvars`, and `.env.template`.
 4. **Brownfield Path First & Cross-Sync**: Default greenfield layout uses `docs/*.md`, root `README.md`/`TODO.md`, and `deployment/README.md`, but **always** respect existing repository locations first (e.g. root `SPEC.md`, `SPEC-<module>.md`, or root `ARCHITECTURE.md`) rather than creating duplicates. Propagate shared command, path, and environment variable updates to `.env.template` and `AGENTS.md` / `GEMINI.md` / `CLAUDE.md` where present.
+5. **Clarity & Scannability**: Lead with the reader's goal using active voice, present tense, descriptive headings, bulleted lists or tables for 3+ items, and runnable examples where helpful.
 
 ## OKF-Lite Frontmatter Standard (OKF v0.2)
 
