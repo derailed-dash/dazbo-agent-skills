@@ -1,16 +1,16 @@
 ---
 name: tiered-rubric-loop
 description: |
-  Executes a bounded SDD + TDD verification loop using a 3-stage funnel:
-  Tier 1 deterministic checks ($0), Tier 1.5 calibrated scoring via the Gemini
+  Drops a combined deterministic and semantic rubric verification loop into any
+  project, acting as the loop component of an agentic harness. Automatically
+  leverages existing Spec-Driven Development (SDD) and Test-Driven Development
+  (TDD) artefacts—or creates lightweight ones inline—routing each check across
+  Tier 1 deterministic gates ($0), Tier 1.5 calibrated scoring via the Gemini
   Decisions API (`gemini-decision-1`, ~200 ms, 0 output tokens), and Tier 2
-  stateless semantic critique only for grey-zone escalations or final `[arch]`
-  sign-off. Loosely coupled with any `B1`-`Bn` Markdown rubric (`SPEC.md`,
-  `docs/SPEC.md`, `LOOPS.md`) and optional companion skills
-  (`maintaining-core-documentation`, `spec-driven-development`,
-  `test-driven-development`, `loopy`, `local-code-review`). Use when running
-  iterative implementation/refinement loops, gating PRs or complex slices
-  against binary acceptance criteria, or scoring diffs and multimodal diagrams.
+  stateless semantic critique only for grey-zone escalations or complex `[arch]`
+  invariants. Use when running iterative implementation/refinement loops, gating
+  PRs or complex slices against `B1`–`Bn` assertions (`SPEC.md` / `LOOPS.md`),
+  or scoring diffs and multimodal diagrams.
 metadata:
   author: Darren "Dazbo" Lester
   repository: https://github.com/derailed-dash/dazbo-agent-skills
@@ -20,29 +20,35 @@ metadata:
 
 # Tiered Rubric Loop (`tiered-rubric-loop`)
 
-A fast, loosely coupled verification harness that combines **Spec-Driven Development (SDD)**, **Test-Driven Development (TDD)**, and a **3-Stage Verification Funnel** (`Tier 1 -> Tier 1.5 -> Tier 2`) inside a strictly bounded feedback loop.
+A fast, loosely coupled way to drop a combined **deterministic + semantic verification loop** into any repository as the verification engine of an agentic harness.
 
-Instead of waking an expensive reasoning subagent on every pass—or trusting a zero-thinking classifier blindly on deep security/concurrency invariants—this skill routes each `B1`–`Bn` assertion to the cheapest accurate verifier.
+It automatically reuses any **Spec-Driven Development (SDD)** (`docs/SPEC.md` or `SPEC.md`) and **Test-Driven Development (TDD)** artefacts already in the repo—or bootstraps a lightweight `B1`–`Bn` binary checklist inline if none exist.
+
+Instead of waking an expensive reasoning subagent on every single pass—or trusting a zero-thinking classifier blindly on deep security and concurrency invariants—each assertion flows through three escalating stages:
+
+1. **Tier 1 — Deterministic Checks (`$0`, seconds)**: Runs local linters, typecheckers, and unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) first. Any failure stops the pass immediately so you never waste API calls on broken code.
+2. **Tier 1.5 — Fast Semantic Scoring (`~200 ms`, `0` output tokens)**: Evaluates open binary (`yes`/`no`) rubric criteria (`B1`–`Bn`) in a single prefill pass using the **Gemini Decisions API** (`gemini-decision-1` via [`scripts/eval_rubric.py`](scripts/eval_rubric.py)). Straightforward editorial and doc-sync checks pass immediately, while obvious omissions fail fast without waking a subagent.
+3. **Tier 2 — Stateless Semantic Critique**: Spawns a fresh, read-only reviewer subagent *only* when Tier 1.5 is uncertain ("grey zone"), or for complex architectural and security invariants (`[arch]`) that need deeper multi-file reasoning.
 
 ## Table of Contents
 
-- [Why the 3-Stage Verification Funnel](#why-the-3-stage-verification-funnel)
+- [How the 3-Stage Funnel Works](#how-the-3-stage-funnel-works)
 - [Plain-Markdown `B1`–`Bn` Contract & Tagging](#plain-markdown-b1bn-contract--tagging)
 - [Loose Coupling & Companion Skills Matrix](#loose-coupling--companion-skills-matrix)
 - [Bounded Loop Workflow](#bounded-loop-workflow)
 - [Running Tier 1.5 (`eval_rubric.py`)](#running-tier-15-eval_rubricpy)
-- [Tri-Band Routing & Stateless Tier 2 Critic](#tri-band-routing--stateless-tier-2-critic)
+- [Threshold Routing & Stateless Tier 2 Critic](#threshold-routing--stateless-tier-2-critic)
 - [Circuit Breaker Trio & Continuous Ratchet](#circuit-breaker-trio--continuous-ratchet)
 - [Loop Receipt Format (`LOOPS.md`)](#loop-receipt-format-loopsmd)
 
 ---
 
-## Why the 3-Stage Verification Funnel
+## How the 3-Stage Funnel Works
 
 | Tier | Mechanism | Latency & Cost | What It Owns |
 | :--- | :--- | :--- | :--- |
-| **Tier 1 (Deterministic)** | Local linters, typecheckers, unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) | Seconds, **\$0** | Syntax, static types, formatting, and deterministic test execution. Any failure **short-circuits immediately** before Tier 1.5 or Tier 2 runs. |
-| **Tier 1.5 (Calibrated Probabilistic)** | `gemini-decision-1` via `client.decisions.create` (`v1beta`) in [`scripts/eval_rubric.py`](scripts/eval_rubric.py) | **~150–250 ms**, **\$0.10 / 1M input tokens**, **0 output / thinking tokens** | Evaluates up to 1,000 closed-ended `noul` (yes/no) assertions over a single shared diff/spec/media payload. Terminates clear mechanical passes (`PASS`), rejects obvious omissions immediately (`FAIL_FAST`), and flags uncertain items for L2. |
+| **Tier 1 (Deterministic)** | Local linters, typecheckers, unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) | Seconds, **`$0`** | Syntax, static types, formatting, and deterministic test execution. Any failure **short-circuits immediately** before Tier 1.5 or Tier 2 runs. |
+| **Tier 1.5 (Calibrated Probabilistic)** | `gemini-decision-1` via `client.decisions.create` (`v1beta`) in [`scripts/eval_rubric.py`](scripts/eval_rubric.py) | **~150–250 ms**, **`$0.10` / 1M input tokens**, **0 output / thinking tokens** | Evaluates up to 1,000 closed-ended `noul` (yes/no) assertions over a single shared diff/spec/media payload. Terminates clear mechanical passes (`PASS`), rejects obvious omissions immediately (`FAIL_FAST`), and flags uncertain items for L2. |
 | **Tier 2 (Stateless Semantic Critic)** | Fresh read-only subagent with zero prior coding chain-of-thought | 10–40 s, standard model tokens | Diagnoses grey-zone escalations (`flash` for mechanical, `inherit` / frontier model for `[arch]`) and performs **one final frontier sign-off** on `[arch]` items after Tier 1.5 is green. |
 
 **Key safety rule**: Because `gemini-decision-1` runs in a single prefill forward pass with **zero thinking tokens** and **zero file-reading tools**, it can produce false positives on subtle logic, race conditions, or auth flaws. Therefore, Tier 1.5 is **terminal** for mechanical/editorial checks, **fail-fast** on clear omissions, and **provisional** for `[arch]` assertions.
@@ -135,7 +141,7 @@ uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py --dry-r
 
 ---
 
-## Tri-Band Routing & Stateless Tier 2 Critic
+## Threshold Routing & Stateless Tier 2 Critic
 
 Default calibrated thresholds (overridable via `--pass-threshold`, `--fail-threshold`, `--min-confidence`):
 - **`PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, mechanical): **Terminal pass.** No L2 model runs.

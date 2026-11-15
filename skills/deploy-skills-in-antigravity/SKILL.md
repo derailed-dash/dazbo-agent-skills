@@ -139,22 +139,27 @@ Get-ChildItem -Path $sourceDir -Directory | ForEach-Object {
 Before completing the task, the agent MUST run the following verification sequence:
 
 ### 1. Folder Existence and Relocation Verification
+
 Confirm the skill directory path (either `~/.gemini/config/skills/` if relocated, or `~/.agents/skills/` if not):
 - **Linux/macOS:** `ls -la ~/.gemini/config/skills/` (or `ls -la ~/.agents/skills/`)
 - **Windows:** `Get-ChildItem "$HOME\.gemini\config\skills"` (or `Get-ChildItem "$HOME\.agents\skills"`)
 
 ### 2. Frontmatter & Integrity Check
+
 Verify that the `SKILL.md` file exists in the target directory and has a valid YAML frontmatter block:
 - **Command:** Read the first 10 lines of `SKILL.md` and confirm it starts with `---` and contains valid `name` and `description` keys.
 
 ### 3. Subdirectory Validation
+
 For complex skills, ensure that nested folders (such as `references/`, `evals/`, or `scripts/`) are present and populated:
 - **Command:** Verify that critical folders are present and not empty.
 
 ### 4. Global Registry Check
+
 Confirm the Skills CLI successfully registers and lists the skill:
 - **Command:** `npx skills ls -g` (or `npx skills ls -g --json`)
 - **Success Criteria:** The output must list the skill name alongside its absolute path.
 
 ### 5. Permission & Readability Check
+
 Ensure that the skill files are readable by the active shell process to prevent loader failures during execution.

@@ -250,14 +250,17 @@ Actively identify orphaned code (both after refactors in Mode A and across modul
 Format your review in clean GitHub-Flavored Markdown using **relative file links** (never `file:///` URIs):
 
 ### 1. Executive Summary & Verdict
+
 - **Mode & Scope Reviewed**: State whether **Mode A (Diff Review)** or **Mode B (Whole-Codebase / Module Audit)** was executed, the files/branches covered, and whether tests were run.
 - **Summary**: Concise assessment (3–6 sentences) covering overall code health, architecture, test coverage, and documentation/diagram alignment.
 - **Verdict**: `✅ Approve / Healthy`, `⚠️ Approve with Minor Suggestions`, or `🔴 Request Changes / Action Required`.
 
 ### 2. Architectural & Holistic Observations
+
 - System-level patterns, cross-module design observations, positive engineering highlights, documentation/diagram sync status, and any **Dead Code Identified** (with `file:line` locations).
 
 ### 3. Findings (Ordered by Leverage & Severity)
+
 Prefix every finding with its severity badge so required vs optional actions are unmistakable:
 - `🔴 Critical`: Security vulnerability, data loss, crash, or broken core functionality (must fix).
 - `🟠 High`: Bug, missing error/edge-case handling, missing test coverage, or significant architectural flaw (should fix).
@@ -270,5 +273,6 @@ For each finding, provide:
 - **Suggested Fix**: Clean drop-in replacement code block (without line-number prefixes).
 
 ### 4. Interactive Next Steps
+
 Conclude by asking the user which findings, refactorings, or dead-code removals they would like you to apply directly.
 

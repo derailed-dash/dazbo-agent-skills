@@ -14,6 +14,14 @@ metadata:
 
 This skill diagnoses and resolves connection failures between Antigravity's Linux-based `browser` subagent (or `chrome-devtools` MCP server) running inside **Windows Subsystem for Linux (WSL2)** and **Google Chrome** running on the Windows host.
 
+## Table of Contents
+
+- [When to Use](#when-to-use)
+- [1. Check If Fixed Upstream First (Future-Proofing)](#1-check-if-fixed-upstream-first-future-proofing)
+- [2. Root Cause Architecture: The Four WSL2 Boundaries](#2-root-cause-architecture-the-four-wsl2-boundaries)
+- [3. Diagnostic & Remediation Procedure](#3-diagnostic--remediation-procedure)
+- [4. Optional Shell Startup Persistence (Zero Assumptions About `~/.bashrc`)](#4-optional-shell-startup-persistence-zero-assumptions-about-bashrc)
+
 ## When to Use
 
 Activate this skill whenever:
@@ -42,9 +50,11 @@ Before applying any workarounds:
 When the problem is present, it is caused by up to four distinct boundaries between WSL2 and Windows Chrome:
 
 ### Boundary 1: Network Isolation (`NAT` vs `mirrored`)
+
 By default, WSL2 uses NAT networking on a separate virtual subnet, preventing Linux processes inside WSL2 from reaching Windows `127.0.0.1:9222`. Enabling `networkingMode=mirrored` in `%USERPROFILE%\.wslconfig` shares `localhost` directly between Windows and WSL2.
 
 ### Boundary 2: Chrome 144+ `--autoConnect` & `DevToolsActivePort` Path Mismatch
+
 Modern Chrome (144+) and `chrome-devtools-mcp --autoConnect` do not blindly probe `http://127.0.0.1:9222/json/version`. Instead, when remote debugging is enabled (`chrome://inspect/#remote-debugging`), Chrome writes a two-line file named `DevToolsActivePort` containing the active port and a session-specific WebSocket UUID path:
 ```text
 9222
@@ -54,9 +64,11 @@ Modern Chrome (144+) and `chrome-devtools-mcp --autoConnect` do not blindly prob
 - **WSL2 `browser` agent reads from**: `~/.config/google-chrome/DevToolsActivePort`
 
 ### Boundary 3: The Sandbox Symlink Trap (`ELOOP`)
+
 Do **NOT** create a symbolic link (`ln -s`) from `~/.config/google-chrome/DevToolsActivePort` to `/mnt/c/...`. Because the Antigravity `browser` subagent runs inside a sandboxed Linux container where `/mnt/c` (`drvfs`) is not mounted or cannot be traversed, symlinks fail with `ELOOP: too many symbolic links encountered`. The file **must** be copied as a regular file (`cp -f`).
 
 ### Boundary 4: The Legacy `socat TCP-LISTEN:9222` Port-Forwarding Trap
+
 Older WSL2 setups often include a background `socat` daemon in `~/.bashrc` that forwards `127.0.0.1:9222` to the Windows Hyper-V NAT gateway IP (`$WIN_IP:9222`, e.g. `172.19.160.1:9222`):
 ```bash
 socat TCP-LISTEN:9222,fork,reuseaddr TCP:$WIN_IP:9222 &> /dev/null &
@@ -104,7 +116,7 @@ Depending on the script output:
 
 Once `~/.config/google-chrome/DevToolsActivePort` is synced and the port is reachable:
 1. Message the existing `browser` subagent (or invoke a new one / call `list_pages`) to retry the operation.
-2. Remind the user that Chrome on Windows may display a one-time **"Allow remote debugging?"** confirmation dialog in the browser window — they should click **Allow**.
+2. Remind the user that Chrome on Windows may display a one-time **"Allow remote debugging?"** confirmation prompt in the browser window — they should click **Allow**.
 
 ---
 

@@ -1,7 +1,13 @@
 ---
 name: organise-agent-skills
 description: |
-  Standardised workflow for auditing, pruning, and organising agent skills in agentic development environments, such as Antigravity. Use when reviewing installed skills, pruning token overhead, disabling sub-skills managed by meta-skills, or adding on-demand activation rules to modular rules (config/rules/on-demand-skills.md), GEMINI.md, or AGENTS.md.
+  Standardised workflow for auditing, cleaning, de-duplicating, pruning, and organising
+  agent skills in Antigravity and Gemini environments. Performs filesystem auto-discovery,
+  orphan pruning, and `skills.json` synchronisation to keep prompt context overhead lean
+  (~30–50 active skills). Use when auditing, cleaning, or de-duplicating installed skills,
+  auto-syncing `skills.json` against disk, pruning token bloat, disabling sub-skills
+  managed by meta-skills, or writing on-demand activation rules in `config/rules/on-demand-skills.md`,
+  `GEMINI.md`, or `AGENTS.md`.
 metadata:
   author: Darren "Dazbo" Lester
   repository: https://github.com/derailed-dash/dazbo-agent-skills
@@ -12,8 +18,7 @@ metadata:
 > [!IMPORTANT]
 > **Mandatory User Confirmation Guardrail**: The agent MUST NOT delete any skill directories, disable/enable skills in configuration files (`skills.json`), or mutate configuration/rules documents (`config/rules/*.md`, `GEMINI.md`, `AGENTS.md`, `README.md`) without first presenting the audit findings, proposed actions, and token metrics to the user and receiving explicit confirmation to proceed.
 
-This skill provides a repeatable, structured workflow for auditing, pruning, and organising agent skills in Antigravity and Gemini environments. It ensures your prompt context window remains lean (~30–50 active skills / ~3,000 tokens overhead per interaction turn) while retaining full access to all installed skills.
-
+This skill provides a repeatable workflow for **auditing, cleaning, de-duplicating, and organising** agent skills in Antigravity and Gemini environments. It keeps your startup prompt context lean (~30–50 active skills / ~3,000 tokens per turn) and synchronises `skills.json` against disk without losing access to any skill in your library.
 
 ## Table of Contents
 
@@ -23,7 +28,7 @@ This skill provides a repeatable, structured workflow for auditing, pruning, and
 - [Workflow Phase 2: Meta-Skill Delegation](#workflow-phase-2-meta-skill-delegation)
 - [Workflow Phase 3: On-Demand Rules (`config/rules/on-demand-skills.md` / `AGENTS.md`)](#workflow-phase-3-on-demand-rules-configruleson-demand-skillsmd--agentsmd)
 - [Workflow Phase 4: Portability & `skills.json` Standalone Inventory](#workflow-phase-4-portability--skillsjson-standalone-inventory)
-- [Workflow Phase 5: Documentation Update](#workflow-phase-5-documentation-update)
+- [Workflow Phase 5: User Response & Documentation Update](#workflow-phase-5-user-response--documentation-update)
 
 ---
 
@@ -38,11 +43,13 @@ When an agent turn starts, the `name` and `description` of every **Installed and
 
 ## Skill Lifecycle & States
 
-Skills operate under three explicit states within agentic development environments (such as Antigravity):
+Skills operate in three states within agentic development environments such as Antigravity:
 
-1. **Installed and inactive (discoverable)**: These skills are present on disk and discoverable by our agent. When the agent (e.g. Antigravity) starts, their frontmatter (Level 1) is automatically read into context. In `skills.json`, these entries are prefixed with `//` or unexcluded.
-2. **Installed and excluded**: These skills reside in your disk library but are _excluded_ from automatic Level 1 loading. For these, the agent does not automatically read their frontmatter and is therefore not *directly* aware of them during your conversation with it. But because they are present on disk and available to the agent, they can still be explicitly activated. In `skills.json`, these entries are listed as plain strings without `//`.
-3. **Activated**: This is the runtime state when a skill's full `SKILL.md` body is actively loaded into the current turn context. I.e. Level 2 loading, and Level 3, where supporting files are present and appropriate.
+| State | `skills.json` Entry | Startup Token Cost | How It Activates |
+| :--- | :--- | :--- | :--- |
+| **1. Discoverable** *(Installed & inactive)* | `"//skill-name"` *(comment-prefixed or unlisted)* | Level 1 frontmatter (`name` + `description`) loaded every turn | Agent matches the pre-loaded description automatically |
+| **2. Excluded** *(Installed on disk)* | `"skill-name"` *(plain string in `exclude`)* | **0 tokens** until needed | Activated on demand via meta-skills or `config/rules/on-demand-skills.md` |
+| **3. Activated** *(Loaded in current turn)* | N/A *(runtime state)* | Level 2 (`SKILL.md` body) + optional Level 3 files | Agent reads the skill's `SKILL.md` for the active task |
 
 ---
 
@@ -138,6 +145,7 @@ When executing `organise-agent-skills` (or via `./scripts/sync_skills.sh` and `u
 4. **Sort Alphabetically**: Maintain the `exclude` array sorted alphabetically (ignoring leading `//`) so scanning and diffing remain clean and predictable.
 
 #### Example `skills.json`:
+
 ```json
 {
   "exclude": [
