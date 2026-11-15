@@ -1,0 +1,39 @@
+[project]
+name = "dazbo-agent-skills"
+version = "0.1.0"
+description = "Dazbo's public collection of AI agent skills and verification utilities"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "codespell>=2.4.1",
+  "google-genai>=3.2.0",
+  "pyright>=1.1.400",
+  "pytest>=8.3.0",
+  "rich>=13.9.0",
+  "ruff>=0.11.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["skills/tiered-rubric-loop/scripts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+include = ["skills/tiered-rubric-loop/scripts/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pyright]
+include = ["skills/tiered-rubric-loop/scripts", "tests"]
+extraPaths = ["skills/tiered-rubric-loop/scripts"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+
+[tool.codespell]
+skip = ".git,.venv,uv.lock"
+ignore-words-list = "noul"

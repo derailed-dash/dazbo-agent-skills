@@ -16,3 +16,11 @@ projects.json
 trustedFolders.json
 gemini-credentials.json
 .env
+
+# Python / uv / test & lint caches
+.venv/
+__pycache__/
+.ruff_cache/
+*.pyc
+dist/
+build/
