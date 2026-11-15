@@ -63,7 +63,7 @@ Build order: `[module-a]` -> `[module-b]`
 
 ## Acceptance Criteria & Verification Rubric
 
-*(Binary pass/fail assertions verified via automated checks; see [docs/TESTING.md](TESTING.md) for suite layout and execution details. Optional `[det]` and `[arch]` tags remain plain human-readable Markdown while enabling automated tiered rubric runners such as `tiered-rubric-loop` to skip deterministic shell gates and gate deep invariants for final frontier review.)*
+*(Binary pass/fail assertions verified via automated checks; see [docs/TESTING.md](TESTING.md) for suite layout and execution details. Optional `[det]` and `[arch]` tags remain plain human-readable Markdown while enabling automated tiered rubric runners such as `tiered-rubric-loop` to skip deterministic shell gates and gate deep invariants for final Tier 2 review.)*
 
 | ID | Falsifiable Condition | Verification Target |
 | :--- | :--- | :--- |
