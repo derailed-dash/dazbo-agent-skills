@@ -75,6 +75,8 @@ Always load the repository's rules and architectural intent before judging code:
 3. **Domain Skills & Official Documentation**:
    - Check if any installed workspace or global agent skills apply to the technologies used in the project.
    - If the code touches Google Cloud (Cloud Run, GKE, BigQuery, Cloud Logging, IAM), Firebase, Vertex AI, or Gemini SDKs, use the Google Developer Knowledge MCP tools (`search_documents`, `get_documents`) to verify current API best practices and model identifiers.
+4. **Optional Tier 1.5 Rubric Pre-Screen (`tiered-rubric-loop`)**:
+   - When `SPEC.md`, `docs/SPEC.md`, or `LOOPS.md` defines `B1`–`Bn` binary assertions and `tiered-rubric-loop` is installed, you can run `eval_rubric.py --json` (or `--base main --json` in **Mode A** branch reviews) first to clear routine mechanical checks in ~200 ms and focus deep review on `FAIL_FAST`, grey-zone, and `[arch]` assertions.
 
 ### Step 3: Evaluate Tests, Documentation, & Visual Assets
 

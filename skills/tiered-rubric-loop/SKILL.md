@@ -67,13 +67,21 @@ The sole shared contract is a Markdown table or bullet list of numbered binary a
 | `B3 [arch]` | Auth middleware rejects expired tokens and never retries `4xx` responses | `tests/unit/test_auth.py` |
 ```
 
-Bullet assertions (`- **B4**: CLI help panel renders in English (UK)` or `- **B5 [security]**: Secrets never appear in structured logs`) are also supported.
+Bullet assertions (`- **B4**: CLI help panel renders in English (UK)`), atomic sub-IDs (`B4a`, `B11b`), numbered items (`1. \`B5 [docs]\`: ...`), and Markdown task checkboxes (`- [ ] **B6 [concurrency]**: ...` or `- [x] **B6**: ...`) are all supported, alongside extended tags (`[mech]`, `[docs]`, `[ui]`, `[visual]`, `[perf]`, `[concurrency]`). Unrecognised tags warn on stderr and default safely to `[mech]` instead of silently dropping the assertion.
 
 | Tag | Meaning | Tier 1.5 Handling |
 | :--- | :--- | :--- |
-| `[det]` (or deterministic Verification Target such as `make lint`, `make test`, `make check`) | Already proven by Tier 1 shell exit codes | **Skipped by Tier 1.5** by default (`--include-det` overrides) so the model never guesses whether `pytest` passed from a text diff. |
-| *(untagged default)* | Mechanical, editorial, doc-sync, schema, or UI convention check | **Terminal `PASS`** when `P(yes) >= 0.90` and `confidence >= 0.80`; `FAIL_FAST` when `<= 0.20`; otherwise `ESCALATE_L2_FLASH`. |
-| `[arch]` (also `[security]`, `[logic]`) | Concurrency, security, state invariant, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final frontier L2 review** once all items clear Tier 1.5. |
+| `[det]` (or deterministic Verification Target such as `make check`, `pytest tests/...`, `codespell -s`, `ruff check .`) | Already proven by Tier 1 shell exit codes | **Skipped by Tier 1.5** by default (`--include-det` overrides) so the model never guesses whether `pytest` passed from a text diff. |
+| *(untagged, `[mech]`, `[docs]`, `[ui]`, `[visual]`, `[multimodal]`)* | Mechanical, editorial, doc-sync, schema, or UI convention check | **Terminal `PASS`** when `P(yes) >= 0.90`, `confidence >= 0.80`, and **no evidence was truncated**; `FAIL_FAST` when `<= 0.20`; otherwise `ESCALATE_L2_FLASH`. |
+| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final frontier L2 review** once all items clear Tier 1.5. |
+
+Repo-relative file paths and local images named in `Verification Target` or inline backticks are **automatically resolved and attached** (blocking `.env`, secret env files, `*.enc`, and paths outside `--repo-root`; pass `--no-auto-target-files` to disable).
+
+### Writing High-Signal `B1`–`Bn` Assertions
+
+- **Keep assertions atomic**: Test **one falsifiable invariant per `Bi`** rather than bundling three functions or eight files into one question—single-invariant assertions give sharp `P(yes)` separation and trigger `FAIL_FAST` accurately on regressions.
+- **Name concrete paths in `Verification Target`**: Prefer `src/auth.py, tests/unit/test_auth.py` over generic `Doc review` / `Code review` so `eval_rubric.py` auto-attaches untouched context files even in narrow working-tree diffs.
+- **Separate canonical registries from summary copy**: Don't assert identical title formatting across both machine registries (`navigation.yaml`) and summarised overview pages (`README.md`, spotlight cards) unless exact parity is truly required.
 
 ---
 
@@ -113,22 +121,31 @@ Resolve `scripts/eval_rubric.py` relative to where `tiered-rubric-loop` is insta
 - Global Antigravity path: `~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py`
 - Project-local path: `.agents/skills/tiered-rubric-loop/scripts/eval_rubric.py`
 
-In sandboxed agent runtimes that block outbound HTTPS by default, invoke `uv run` with unsandboxed network permission (`BypassSandbox: true` in Antigravity).
+In sandboxed agent runtimes that block outbound HTTPS by default, invoke `uv run` with unsandboxed network permission (`BypassSandbox: true` in Antigravity) for live API calls, or pass `--offline` for sandboxed `--dry-run` checks.
 
 ```bash
-# Auto-discover SPEC.md / docs/SPEC.md / LOOPS.md and output JSON routing decisions
+# 1. Working-tree loop: auto-discover SPEC.md / docs/SPEC.md / LOOPS.md
 uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py --json
 
-# Explicit spec, scoped files, and multimodal diagram/UI screenshot check
+# 2. Branch or merged PR gating: evaluate committed changes against base ref / range
+uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py --base main --json
+uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py \
+  --git-range origin/main...HEAD \
+  --only B3,B4 \
+  --json
+
+# 3. Explicit spec, scoped files, and multimodal diagram/UI screenshot check
 uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py \
   --spec docs/SPEC.md \
   --file src/auth.py \
   --image docs/images/architecture.png \
   --json
 
-# Offline dry-run (verifies rubric parsing and payload assembly with zero API calls)
-uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py --dry-run --json
+# 4. Offline dry-run inside sandbox (verifies rubric, targets, and truncation zero-API)
+uv run --offline ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py --dry-run --json
 ```
+
+For large PRs (`> 8` files or `> 100 KB`), shard evaluations by assertion group via `--only B3,B4` so files stay within `--max-file-chars` (`24,000`) and `--max-evidence-chars` (`180,000`). If any file or combined payload is truncated, `eval_rubric.py` populates `truncated_sources` and **downgrades mechanical `PASS` to `ESCALATE_L2_FLASH`** unless `--allow-truncated-pass` is explicitly set.
 
 ### Exit Codes
 
