@@ -101,6 +101,7 @@ Identify impacted documents from your change set before reading or editing:
 - **ADR Alignment**: Record high-signal decisions in `ARCHITECTURE.md`'s ADR table. If the repository already maintains standalone numbered ADR files (`docs/adr/` or `docs/decisions/`), keep the table concise and link each row to its ADR file rather than duplicating full prose.
 - **Conductor Coexistence**: If `conductor/` is active, **do not** create duplicate root/docs `PRD.md` or `SPEC.md` files where `conductor/product.md` and `conductor/tracks/<track_id>/spec.md` already own them. **Never** modify `conductor/workflow.md`, `conductor/tracks.md`, `conductor/setup_state.json`, `conductor/code_styleguides/`, or `conductor/archive/`.
 - **Task Tracking Boundary**: Keep high-level feature milestones in `TODO.md`; leave fine-grained implementation slices in `tasks/plan.md`, `tasks/todo.md`, or Conductor track plans. Offer to mark matching `TODO.md` milestones complete (`[x]`) when finished.
+- **Rubric Tagging (`[det]` / `[arch]`)**: Numbered `B1`–`Bn` rows in `SPEC.md` may carry optional `[det]` (Tier 1 deterministic shell gates) or `[arch]` (deep security, logic, or concurrency invariants) tags so automated loop runners (`tiered-rubric-loop`) can route checks cleanly without changing human readability.
 
 ## Formatting & Diagram Rules
 

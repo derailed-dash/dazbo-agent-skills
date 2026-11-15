@@ -63,12 +63,13 @@ Build order: `[module-a]` -> `[module-b]`
 
 ## Acceptance Criteria & Verification Rubric
 
-*(Binary pass/fail assertions verified via automated checks; see [docs/TESTING.md](TESTING.md) for suite layout and execution details.)*
+*(Binary pass/fail assertions verified via automated checks; see [docs/TESTING.md](TESTING.md) for suite layout and execution details. Optional `[det]` and `[arch]` tags remain plain human-readable Markdown while enabling automated tiered rubric runners such as `tiered-rubric-loop` to skip deterministic shell gates and gate deep invariants for final frontier review.)*
 
 | ID | Falsifiable Condition | Verification Target |
 | :--- | :--- | :--- |
-| `B1` | [Observable condition that must hold true] | [e.g. `make check` / `pytest tests/unit/...`] |
-| `B2` | [Observable condition that must hold true] | [e.g. `make ui-test` / `curl` check] |
+| `B1 [det]` | [Static gates and offline unit tests exit `0`] | [e.g. `make check` / `pytest tests/unit/...`] |
+| `B2` | [Observable mechanical/documentation condition that must hold true] | [e.g. `README.md` / CLI `--help` check] |
+| `B3 [arch]` | [Deep logic, security, or concurrency invariant that must hold true] | [e.g. `tests/unit/test_auth.py` + semantic review] |
 
 ## Out of Scope & Open Questions
 

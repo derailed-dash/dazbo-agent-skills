@@ -33,6 +33,7 @@ According to [Skills.sh](https://skills.sh/), these skills have been installed:
 | **Install Gemini Code Review Action** | Automated setup for Dazbo's Gemini-based PR Code Review & Issue Triage action. Streamlines setup and configures secure API credentials. | **Use when** setting up automated Gemini-based pull request code reviews or issue triaging workflows in a GitHub repository. Offers interactive credential setup using the GitHub CLI (`gh`). |
 | **Local Code Review** | Multi-axis local code, documentation, and architecture review across any repository (GitHub, Bitbucket, GitLab, or local working tree). Supports both Diff Review Mode and Whole-Codebase Audit Mode. | **Use when** reviewing uncommitted changes, staged diffs, branches, commit ranges, or auditing an entire repository/module locally using Dazbo's Five-Axis rubric and anti-hallucination guardrails. |
 | **Organise Agent Skills** | Standardised workflow for auditing, pruning, and organising agent skills in Antigravity/Gemini environments. Performs filesystem auto-discovery, orphan pruning, and manages `skills.json` as a full inventory control panel to keep context token overhead lean (~30–50 active skills). | **Use when** auditing installed skills, auto-syncing `skills.json` against disk, pruning token bloat, disabling sub-skills managed by meta-skills, or writing activation rules in `GEMINI.md` / `AGENTS.md`. |
+| **Tiered Rubric Loop** | Fast, loosely coupled SDD + TDD verification loop combining Tier 1 deterministic checks (`$0`), Tier 1.5 calibrated scoring via the Gemini Decisions API (`gemini-decision-1`, ~200 ms, 0 output tokens), and Tier 2 stateless semantic critique only for grey-zone escalations or final `[arch]` sign-off. | **Use when** running iterative implementation/refinement loops, gating PRs or complex slices against `B1`–`Bn` assertions (`SPEC.md` / `LOOPS.md`), or scoring diffs and multimodal diagrams. |
 
 ### Installation Instructions
 
@@ -58,6 +59,7 @@ npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill fix-w
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill install-gemini-code-review-action
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill local-code-review
 npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill organise-agent-skills
+npx skills add https://github.com/derailed-dash/dazbo-agent-skills --skill tiered-rubric-loop
 ```
 
 Check my blog [Confused About Where to Put Your Agent Skills?](https://medium.com/google-cloud/confused-about-where-to-put-your-agent-skills-ea778f3c64f3) for more information on where you can put these skills.
@@ -96,7 +98,11 @@ dazbo-agent-skills/
 │   │   └── SKILL.md                       # Main instruction file
 │   ├── local-code-review/                 # Multi-axis local code & architecture review
 │   │   └── SKILL.md                       # Main instruction file
-│   └── organise-agent-skills/             # Audits, prunes, and manages skill token overhead
-│       └── SKILL.md                       # Main instruction file
+│   ├── organise-agent-skills/             # Audits, prunes, and manages skill token overhead
+│   │   └── SKILL.md                       # Main instruction file
+│   └── tiered-rubric-loop/                # 3-tier SDD + TDD + Decisions API rubric loop
+│       ├── SKILL.md                       # Main instruction file
+│       └── scripts/                       # Calibrated Tier 1.5 evaluator
+│           └── eval_rubric.py
 └── README.md                              # This storefront
 ```
