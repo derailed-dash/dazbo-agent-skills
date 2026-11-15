@@ -381,3 +381,21 @@ def test_arch_items_always_route_to_flash() -> None:
     assert evaluation.final_l2_arch_ids == ["B3"]
     assert evaluation.escalate_flash_ids == ["B4"]
     assert evaluation.exit_code == 1
+
+
+def test_parse_rubric_supports_backticked_tags_after_bold_id() -> None:
+    """Parse bullets and tables with backticked tags like `- **B1** `[det]`:`."""
+    md = (
+        "- **B1** `[det]`: `make check` exits `0`.\n"
+        "- **B2** `[arch]`: Auth middleware rejects expired tokens.\n"
+        "| ID | Condition | Target |\n"
+        "| :--- | :--- | :--- |\n"
+        "| **B3** `[docs]` | README updated | Doc review |\n"
+    )
+    items = eval_rubric.parse_rubric_markdown(md)
+    by_id = {item.id: item for item in items}
+
+    assert set(by_id) == {"B1", "B2", "B3"}
+    assert by_id["B1"].category == "det"
+    assert by_id["B2"].category == "arch"
+    assert by_id["B3"].category == "mech"
