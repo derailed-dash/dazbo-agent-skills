@@ -108,6 +108,10 @@ dazbo-agent-skills/
 │       ├── SKILL.md                       # Main instruction file
 │       └── scripts/                       # Calibrated Tier 1.5 evaluator
 │           └── eval_rubric.py
+├── tests/                                 # Offline unit tests for skill scripts
+├── AGENTS.md                              # Repository & skill authoring guidelines
+├── Makefile                               # Static checks and unit test targets (make check)
+├── pyproject.toml                         # uv dev environment and linter config
 └── README.md                              # This storefront
 ```
 
