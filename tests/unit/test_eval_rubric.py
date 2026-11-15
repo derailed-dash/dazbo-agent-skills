@@ -360,3 +360,24 @@ def test_explicit_file_outside_repo_root_accepted_while_secrets_blocked(tmp_path
     assert "def ok() -> bool:" in bundle.text
     assert str(scratch_env) not in bundle.evidence_files
     assert "SECRET=1" not in bundle.text
+
+
+def test_arch_items_always_route_to_flash() -> None:
+    """Route both provisional passes and grey-zone [arch] items to flash (never inherit)."""
+    pass_arch = eval_rubric.RubricItem(id="B3", condition="Token check", category="arch")
+    grey_arch = eval_rubric.RubricItem(id="B4", condition="Concurrency guard", category="arch")
+    answers: dict[str, Any] = {
+        "B3": {"noul": 0.96, "confidence": 0.92},
+        "B4": {"noul": 0.55, "confidence": 0.70},
+    }
+
+    evaluation = eval_rubric.evaluate_answers(items=[pass_arch, grey_arch], answers=answers)
+    verdicts_by_id = {v.id: v for v in evaluation.verdicts}
+
+    assert verdicts_by_id["B3"].status == "PROVISIONAL_ARCH_PASS"
+    assert verdicts_by_id["B3"].l2_model == "flash"
+    assert verdicts_by_id["B4"].status == "ESCALATE_L2_FLASH"
+    assert verdicts_by_id["B4"].l2_model == "flash"
+    assert evaluation.final_l2_arch_ids == ["B3"]
+    assert evaluation.escalate_flash_ids == ["B4"]
+    assert evaluation.exit_code == 1

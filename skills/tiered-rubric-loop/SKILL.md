@@ -4,11 +4,11 @@ description: |
   Drops a combined deterministic and semantic rubric verification loop into any
   project, acting as the loop component of an agentic harness. Automatically
   leverages existing Spec-Driven Development (SDD) and Test-Driven Development
-  (TDD) artefacts—or creates lightweight ones inline—routing each check across
-  Tier 1 deterministic gates ($0), Tier 1.5 calibrated scoring via the Gemini
-  Decisions API (`gemini-decision-1`, ~200 ms, 0 output tokens), and Tier 2
-  stateless semantic critique only for grey-zone escalations or complex `[arch]`
-  invariants. Use when running iterative implementation/refinement loops, gating
+  (TDD) artefacts - or creates lightweight ones inline - routing each check across
+  fast Tier 1 deterministic gates, Tier 1.5 calibrated scoring via the Gemini
+  Decisions API (fast and 0 output tokens), and a Tier 2 stateless semantic 
+  critique only for 1.5 escalations or complex `[arch]` invariants. 
+  Use when running iterative implementation/refinement loops, gating
   PRs or complex slices against `B1`–`Bn` assertions (`SPEC.md` / `LOOPS.md`),
   or scoring diffs and multimodal diagrams.
 metadata:
@@ -22,12 +22,12 @@ metadata:
 
 A fast, loosely coupled way to drop a combined **deterministic + semantic verification loop** into any repository as the verification engine of an agentic harness.
 
-It automatically reuses any **Spec-Driven Development (SDD)** (`docs/SPEC.md` or `SPEC.md`) and **Test-Driven Development (TDD)** artefacts already in the repo—or bootstraps a lightweight `B1`–`Bn` binary checklist inline if none exist.
+It automatically reuses any **Spec-Driven Development (SDD)** (`docs/SPEC.md` or `SPEC.md`) and **Test-Driven Development (TDD)** artefacts already in the repo, or bootstraps a lightweight `B1–Bn` binary rubric checklist inline if none exist.
 
-Instead of waking an expensive reasoning subagent on every single pass—or trusting a zero-thinking classifier blindly on deep security and concurrency invariants—each assertion flows through three escalating stages:
+Instead of waking an expensive reasoning subagent on every single pass, or trusting a zero-thinking classifier blindly on deep security and concurrency invariants, each assertion flows through three escalating stages:
 
-1. **Tier 1 — Deterministic Checks (`$0`, seconds)**: Runs local linters, typecheckers, and unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) first. Any failure stops the pass immediately so you never waste API calls on broken code.
-2. **Tier 1.5 — Fast Semantic Scoring (`~200 ms`, `0` output tokens)**: Evaluates open binary (`yes`/`no`) rubric criteria (`B1`–`Bn`) in a single prefill pass using the **Gemini Decisions API** (`gemini-decision-1` via [`scripts/eval_rubric.py`](scripts/eval_rubric.py)). Straightforward editorial and doc-sync checks pass immediately, while obvious omissions fail fast without waking a subagent.
+1. **Tier 1 — Deterministic Checks (fast)**: Runs local linters, typecheckers, and unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) first. Any failure stops the pass immediately so you never waste API calls on broken code.
+2. **Tier 1.5 — Fast Semantic Scoring (fast model, no output tokens)**: Evaluates open binary (`yes`/`no`) rubric criteria (`B1–Bn`) in a single prefill pass using the **Gemini Decisions API** (`gemini-decision-1` via [`scripts/eval_rubric.py`](scripts/eval_rubric.py)). Straightforward editorial and doc-sync checks pass immediately, while obvious omissions fail fast without waking a subagent.
 3. **Tier 2 — Stateless Semantic Critique**: Spawns a fresh, read-only reviewer subagent *only* when Tier 1.5 is uncertain ("grey zone"), or for complex architectural and security invariants (`[arch]`) that need deeper multi-file reasoning.
 
 ## Table of Contents
@@ -49,15 +49,15 @@ Instead of waking an expensive reasoning subagent on every single pass—or trus
 | :--- | :--- | :--- | :--- |
 | **Tier 1 (Deterministic)** | Local linters, typecheckers, unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) | Seconds, **`$0`** | Syntax, static types, formatting, and deterministic test execution. Any failure **short-circuits immediately** before Tier 1.5 or Tier 2 runs. |
 | **Tier 1.5 (Calibrated Probabilistic)** | `gemini-decision-1` via `client.decisions.create` (`v1beta`) in [`scripts/eval_rubric.py`](scripts/eval_rubric.py) | **~150–250 ms**, **`$0.10` / 1M input tokens**, **0 output / thinking tokens** | Evaluates up to 1,000 closed-ended `noul` (yes/no) assertions over a single shared diff/spec/media payload. Terminates clear mechanical passes (`PASS`), rejects obvious omissions immediately (`FAIL_FAST`), and flags uncertain items for L2. |
-| **Tier 2 (Stateless Semantic Critic)** | Fresh read-only subagent with zero prior coding chain-of-thought | 10–40 s, standard model tokens | Diagnoses grey-zone escalations (`flash` for mechanical, `inherit` / frontier model for `[arch]`) and performs **one final frontier sign-off** on `[arch]` items after Tier 1.5 is green. |
+| **Tier 2 (Stateless Semantic Critic)** | Fresh read-only `flash` subagent with zero prior coding chain-of-thought | 10–40 s, standard model tokens | Diagnoses grey-zone escalations and performs **one final L2 sign-off** on `[arch]` items after Tier 1.5 is green. |
 
 **Key safety rule**: Because `gemini-decision-1` runs in a single prefill forward pass with **zero thinking tokens** and **zero file-reading tools**, it can produce false positives on subtle logic, race conditions, or auth flaws. Therefore, Tier 1.5 is **terminal** for mechanical/editorial checks, **fail-fast** on clear omissions, and **provisional** for `[arch]` assertions.
 
 ---
 
-## Plain-Markdown `B1`–`Bn` Contract & Tagging
+## Plain-Markdown `B1–Bn` Contract & Tagging
 
-The sole shared contract is a Markdown table or bullet list of numbered binary assertions (`B1`–`Bn`) in `docs/SPEC.md`, `SPEC.md`, or `LOOPS.md` (with optional `--spec <path>` override):
+The sole shared contract is a Markdown table or bullet list of numbered binary assertions (`B1–Bn`) in `docs/SPEC.md`, `SPEC.md`, or `LOOPS.md` (with optional `--spec <path>` override):
 
 ```markdown
 | ID | Falsifiable Condition | Verification Target |
@@ -67,17 +67,23 @@ The sole shared contract is a Markdown table or bullet list of numbered binary a
 | `B3 [arch]` | Auth middleware rejects expired tokens and never retries `4xx` responses | `tests/unit/test_auth.py` |
 ```
 
-Bullet assertions (`- **B4**: CLI help panel renders in English (UK)`), atomic sub-IDs (`B4a`, `B11b`), numbered items (`1. \`B5 [docs]\`: ...`), and Markdown task checkboxes (`- [ ] **B6 [concurrency]**: ...` or `- [x] **B6**: ...`) are all supported, alongside extended tags (`[mech]`, `[docs]`, `[ui]`, `[visual]`, `[perf]`, `[concurrency]`). Unrecognised tags warn on stderr and default safely to `[mech]` instead of silently dropping the assertion.
+Other supported rubric formats and tags:
+
+- **Bullet assertions**: `- **B4**: CLI help panel renders in English (UK)`
+- **Atomic sub-IDs**: `B4a`, `B11b`
+- **Numbered items**: ``1. `B5 [docs]`: ...``
+- **Task checkboxes**: `- [ ] **B6 [concurrency]**: ...` or `- [x] **B6**: ...`
+- **Extended tags**: `[mech]`, `[docs]`, `[ui]`, `[visual]`, `[perf]`, `[concurrency]` (unrecognised tags warn on `stderr` and default safely to `[mech]` instead of silently dropping the assertion)
 
 | Tag | Meaning | Tier 1.5 Handling |
 | :--- | :--- | :--- |
 | `[det]` (or deterministic Verification Target such as `make check`, `pytest tests/...`, `codespell -s`, `ruff check .`) | Already proven by Tier 1 shell exit codes | **Skipped by Tier 1.5** by default (`--include-det` overrides) so the model never guesses whether `pytest` passed from a text diff. |
 | *(untagged, `[mech]`, `[docs]`, `[ui]`, `[visual]`, `[multimodal]`)* | Mechanical, editorial, doc-sync, schema, or UI convention check | **Terminal `PASS`** when `P(yes) >= 0.90`, `confidence >= 0.80`, and **no evidence was truncated**; `FAIL_FAST` when `<= 0.20`; otherwise `ESCALATE_L2_FLASH`. |
-| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final frontier L2 review** once all items clear Tier 1.5. |
+| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final Tier 2 (`Model: "flash"`) review** once all items clear Tier 1.5. |
 
 Repo-relative file paths and local images named in `Verification Target` or inline backticks are **automatically resolved and attached** (blocking `.env`, secret env files, `*.enc`, and paths outside `--repo-root`; pass `--no-auto-target-files` to disable).
 
-### Writing High-Signal `B1`–`Bn` Assertions
+### Writing High-Signal `B1–Bn` Assertions
 
 - **Keep assertions atomic**: Test **one falsifiable invariant per `Bi`** rather than bundling three functions or eight files into one question—single-invariant assertions give sharp `P(yes)` separation and trigger `FAIL_FAST` accurately on regressions.
 - **Name concrete paths in `Verification Target`**: Prefer `src/auth.py, tests/unit/test_auth.py` over generic `Doc review` / `Code review` so `eval_rubric.py` auto-attaches untouched context files even in narrow working-tree diffs.
@@ -151,7 +157,7 @@ For large PRs (`> 8` files or `> 100 KB`), shard evaluations by assertion group 
 
 | Code | Meaning | Loop Action |
 | :--- | :--- | :--- |
-| `0` | Tier 1.5 clear (all evaluated items are `PASS` or `PROVISIONAL_ARCH_PASS`) | If `final_l2_arch_ids` is non-empty, run **one** Tier 2 frontier critic pass on those IDs; otherwise exit loop as **`Success`**. |
+| `0` | Tier 1.5 clear (all evaluated items are `PASS` or `PROVISIONAL_ARCH_PASS`) | If `final_l2_arch_ids` is non-empty, run **one** Tier 2 (`Model: "flash"`) critic pass on those IDs; otherwise exit loop as **`Success`**. |
 | `1` | One or more `FAIL_FAST` or `ESCALATE_L2_*` items (or API call error) | Address `FAIL_FAST` items directly; escalate grey-zone items (`ESCALATE_L2_*`) only when root cause is non-obvious. |
 | `2` | Usage error, missing spec, or no `B1`–`Bn` assertions parsed | Fix spec path or rubric formatting before continuing. |
 | `3` | Missing/invalid `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Degrade gracefully to **`Tier 1 -> Tier 2`** and inform the user once. |
@@ -162,19 +168,17 @@ For large PRs (`> 8` files or `> 100 KB`), shard evaluations by assertion group 
 
 Default calibrated thresholds (overridable via `--pass-threshold`, `--fail-threshold`, `--min-confidence`):
 - **`PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, mechanical): **Terminal pass.** No L2 model runs.
-- **`PROVISIONAL_ARCH_PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, `[arch]`): Held until all other assertions pass, then verified once by a frontier L2 critic.
+- **`PROVISIONAL_ARCH_PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, `[arch]`): Held until all other assertions pass, then verified once by a Tier 2 (`Model: "flash"`) critic.
 - **`FAIL_FAST`** (`P(yes) <= 0.20`, `confidence >= 0.80`): Returned directly to the coding agent—do **not** burn an L2 turn repeating an obvious omission.
-- **`ESCALATE_L2_FLASH`** / **`ESCALATE_L2_INHERIT`** (`0.20 < P(yes) < 0.90` or `confidence < 0.80`): Escalate **only those specific `Bi` IDs** to a fresh read-only subagent.
+- **`ESCALATE_L2_FLASH`** (`0.20 < P(yes) < 0.90` or `confidence < 0.80`): Escalate **only those specific `Bi` IDs** to a fresh read-only subagent.
 
 ### Subagent Routing Across Coding Agents
 
-Always spawn Tier 2 as a **fresh, stateless, read-only subagent** that never sees the coding agent's prior chain-of-thought or failed attempts:
-- **Antigravity**: Call `invoke_subagent` with `TypeName: "research"` (`Model: "flash"` for `ESCALATE_L2_FLASH`; `Model: "inherit"` for `ESCALATE_L2_INHERIT` and final `PROVISIONAL_ARCH_PASS` sign-off, optionally applying `local-code-review`).
-- **Claude Code / Gemini CLI / Other Agents**: Spawn a read-only reviewer subagent (Haiku/Flash tier for mechanical escalations; Opus/Sonnet/Frontier tier for `[arch]` escalations).
+Always spawn Tier 2 as a **fresh, stateless, read-only subagent** that never sees the coding agent's prior chain-of-thought or failed attempts. When spawning, use a fast or flash agent. For example, in **Antigravity**, call `invoke_subagent` with `TypeName: "research"` and `Model: "flash"`.
 
 ### Built-In Stateless Tier 2 Critic Prompt
 
-When `local-code-review` is not installed, pass this exact prompt (filling in only the target `Bi` IDs, spec path, and changed files):
+Pass this exact prompt (filling in only the target `Bi` IDs, spec path, and changed files):
 
 ```text
 You are a stateless, read-only Tier 2 semantic critic. You have NOT seen the
@@ -196,7 +200,7 @@ Rules:
 
 Stop the loop whenever **any** of these three conditions triggers:
 
-1. **100% Pass**: Tier 1 passes, Tier 1.5 reports `exit_code == 0`, and any `final_l2_arch_ids` clear their final frontier Tier 2 review (**`Success`**).
+1. **100% Pass**: Tier 1 passes, Tier 1.5 reports `exit_code == 0`, and any `final_l2_arch_ids` clear their final Tier 2 (`Model: "flash"`) review (**`Success`**).
 2. **Pass Budget Exhausted**: Maximum **4–5 passes** per slice reached (**`Exhausted`**—escalate remaining blockers to the user).
 3. **2 Consecutive Non-Improving Passes**: Neither failing assertion count decreases **nor** `ratchet_score` (mean `P(yes)` across evaluated `B1`–`Bn` items) improves across two consecutive passes (**`No progress`**—escalate to the user rather than spinning).
 
@@ -216,6 +220,6 @@ Record completed runs (or append per-pass telemetry) concisely:
 - **Passes**: [N / 5] | **Outcome**: `Success` | `Exhausted` | `No progress` | `Blocked`
 - **Tier 1**: `make check` -> PASS
 - **Tier 1.5 Ratchet (`gemini-decision-1`)**: `0.58 -> 0.94 -> 0.98` (skipped `[det]`: `B1`)
-- **Tier 2 (`Model: "inherit"`)**: Verified `[arch]` IDs `B3` -> PASS
+- **Tier 2 (`Model: "flash"`)**: Verified `[arch]` IDs `B3` -> PASS
 - **Remaining / Escalation**: None (or exact failing `Bi` + file:line)
 ```

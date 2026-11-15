@@ -20,9 +20,9 @@ Value:
        expensive Layer-2 review subagents, unless evidence was truncated.
     2. Fails fast (`FAIL_FAST`) on clear omissions directly back to the coding
        loop instead of wasting a semantic critic turn.
-    3. Escalates grey-zone items (`ESCALATE_L2_FLASH` / `ESCALATE_L2_INHERIT`)
+    3. Escalates grey-zone items (`ESCALATE_L2_FLASH`)
        and gates `[arch]` assertions (`PROVISIONAL_ARCH_PASS`) for one final
-       frontier review before declaring success.
+       Tier 2 Flash review before declaring success.
     4. Supports both working-tree loops and branch/PR gating (`--base`,
        `--git-range`), auto-attaches repo-relative target files safely, and
        computes a continuous mean `P(yes)` `ratchet_score`.
@@ -199,7 +199,6 @@ class RubricEvaluation:
     final_l2_arch_ids: list[str] = field(default_factory=list)
     fail_fast_ids: list[str] = field(default_factory=list)
     escalate_flash_ids: list[str] = field(default_factory=list)
-    escalate_inherit_ids: list[str] = field(default_factory=list)
     latency_ms: float | None = None
     input_tokens: int | None = None
     evidence_files: list[str] = field(default_factory=list)
@@ -998,7 +997,6 @@ def evaluate_answers(
     final_l2_arch_ids: list[str] = []
     fail_fast_ids: list[str] = []
     escalate_flash_ids: list[str] = []
-    escalate_inherit_ids: list[str] = []
     trunc_list = list(truncated_sources or [])
     warn_list = list(warnings or [])
     downgraded_ids: list[str] = []
@@ -1008,7 +1006,7 @@ def evaluate_answers(
         if p_yes >= pass_threshold and confidence >= min_confidence:
             if item.category == "arch":
                 status = "PROVISIONAL_ARCH_PASS"
-                l2_model = "inherit"
+                l2_model = "flash"
                 final_l2_arch_ids.append(item.id)
             elif trunc_list and not allow_truncated_pass:
                 status = "ESCALATE_L2_FLASH"
@@ -1022,10 +1020,6 @@ def evaluate_answers(
             status = "FAIL_FAST"
             l2_model = None
             fail_fast_ids.append(item.id)
-        elif item.category == "arch":
-            status = "ESCALATE_L2_INHERIT"
-            l2_model = "inherit"
-            escalate_inherit_ids.append(item.id)
         else:
             status = "ESCALATE_L2_FLASH"
             l2_model = "flash"
@@ -1051,7 +1045,7 @@ def evaluate_answers(
         )
 
     ratchet_score = sum(v.p_yes for v in verdicts) / len(verdicts) if verdicts else 1.0
-    has_blocking = bool(fail_fast_ids or escalate_flash_ids or escalate_inherit_ids)
+    has_blocking = bool(fail_fast_ids or escalate_flash_ids)
 
     return RubricEvaluation(
         verdicts=verdicts,
@@ -1061,7 +1055,6 @@ def evaluate_answers(
         final_l2_arch_ids=final_l2_arch_ids,
         fail_fast_ids=fail_fast_ids,
         escalate_flash_ids=escalate_flash_ids,
-        escalate_inherit_ids=escalate_inherit_ids,
         evidence_files=list(evidence_files or []),
         evidence_chars=evidence_chars,
         truncated_sources=trunc_list,
@@ -1130,7 +1123,6 @@ def render_rich_report(evaluation: RubricEvaluation, spec_path: Path, model: str
         "PROVISIONAL_ARCH_PASS": "cyan",
         "FAIL_FAST": "bold red",
         "ESCALATE_L2_FLASH": "yellow",
-        "ESCALATE_L2_INHERIT": "yellow",
     }
 
     for verdict in evaluation.verdicts:
@@ -1155,7 +1147,7 @@ def render_rich_report(evaluation: RubricEvaluation, spec_path: Path, model: str
         if evaluation.skipped_det_ids
         else ""
     )
-    escalate_ids = evaluation.escalate_flash_ids + evaluation.escalate_inherit_ids
+    escalate_ids = evaluation.escalate_flash_ids
     extra_lines: list[str] = []
     if evaluation.truncated_sources:
         extra_lines.append(f"Truncated: {escape(', '.join(evaluation.truncated_sources))}")
