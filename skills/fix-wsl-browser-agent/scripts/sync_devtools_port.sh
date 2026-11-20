@@ -26,12 +26,12 @@ fi
 # 2. Detect and terminate legacy socat port-9222 forwarders (Boundary 4)
 if pgrep -f "socat TCP-LISTEN:9222" >/dev/null 2>&1; then
     echo "WARNING: Detected legacy 'socat TCP-LISTEN:9222' daemon hijacking port 9222 in WSL2."
-    echo "         (Chrome only binds to 127.0.0.1:9222 on Windows, so forwarding to the NAT IP hangs.)"
+    echo "         (Chrome only binds to Windows loopback 127.0.0.1:<port>, so forwarding to the NAT IP hangs.)"
     pkill -f "socat TCP-LISTEN:9222" || true
     echo "         Terminated legacy socat process(es)."
 fi
-if [ -f "${HOME}/.bashrc" ] && grep -q "socat TCP-LISTEN:9222" "${HOME}/.bashrc" 2>/dev/null; then
-    echo "NOTE: Remove the obsolete 'socat TCP-LISTEN:9222' block from ~/.bashrc."
+if [ -f "${HOME}/.bashrc" ] && grep -qE '^[[:space:]]*[^#].*socat TCP-LISTEN:9222' "${HOME}/.bashrc" 2>/dev/null; then
+    echo "NOTE: Remove or comment out the obsolete 'socat TCP-LISTEN:9222' block in ~/.bashrc."
 fi
 
 # 3. Locate Windows Chrome DevToolsActivePort file (Boundary 2)

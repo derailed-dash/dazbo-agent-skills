@@ -51,13 +51,13 @@ When the problem is present, it is caused by up to four distinct boundaries betw
 
 ### Boundary 1: Network Isolation (`NAT` vs `mirrored`)
 
-By default, WSL2 uses NAT networking on a separate virtual subnet, preventing Linux processes inside WSL2 from reaching Windows `127.0.0.1:9222`. Enabling `networkingMode=mirrored` in `%USERPROFILE%\.wslconfig` shares `localhost` directly between Windows and WSL2.
+By default, WSL2 uses NAT networking on a separate virtual subnet, preventing Linux processes inside WSL2 from reaching Windows loopback debugging ports (`127.0.0.1:<port>`, such as `9222` or dynamic ephemeral ports). Enabling `networkingMode=mirrored` in `%USERPROFILE%\.wslconfig` shares `localhost` directly between Windows and WSL2.
 
 ### Boundary 2: Chrome 144+ `--autoConnect` & `DevToolsActivePort` Path Mismatch
 
-Modern Chrome (144+) and `chrome-devtools-mcp --autoConnect` do not blindly probe `http://127.0.0.1:9222/json/version`. Instead, when remote debugging is enabled (`chrome://inspect/#remote-debugging`), Chrome writes a two-line file named `DevToolsActivePort` containing the active port and a session-specific WebSocket UUID path:
+Modern Chrome (144+) and `chrome-devtools-mcp --autoConnect` do not blindly probe `http://127.0.0.1:9222/json/version`. Instead, when remote debugging is enabled (`chrome://inspect/#remote-debugging`), Chrome binds an active port (`9222` or a dynamic ephemeral port such as `51472`) and writes a two-line file named `DevToolsActivePort` containing that port and a session-specific WebSocket UUID path:
 ```text
-9222
+51472
 /devtools/browser/d7936b9a-4469-4faf-97ae-f700b05e5b77
 ```
 - **Windows Chrome writes to**: `/mnt/c/Users/<win-user>/AppData/Local/Google/Chrome/User Data/DevToolsActivePort`
@@ -73,9 +73,9 @@ Older WSL2 setups often include a background `socat` daemon in `~/.bashrc` that 
 ```bash
 socat TCP-LISTEN:9222,fork,reuseaddr TCP:$WIN_IP:9222 &> /dev/null &
 ```
-This fails in both networking modes and must be removed:
-- **In `NAT` mode**: Windows Chrome (`chrome://inspect/#remote-debugging`) strictly binds to `127.0.0.1:9222` and `[::1]:9222` on the Windows loopback interface (`netstat.exe -ano | grep 9222`) and **refuses** connections on the `172.x.x.x` Hyper-V interface. However, because `socat` listens on `*:9222` in WSL2, TCP connections to `127.0.0.1:9222` appear to connect and then silently hang until timeout.
-- **In `mirrored` mode**: `socat` squats on port `9222` inside WSL2 and hijacks traffic away from the native mirrored loopback interface.
+This fails in both networking modes and must be removed or commented out:
+- **In `NAT` mode**: Windows Chrome (`chrome://inspect/#remote-debugging`) strictly binds to Windows loopback (`127.0.0.1:<port>` and `[::1]:<port>`, visible via `netstat.exe -ano`) and **refuses** connections on the `172.x.x.x` Hyper-V interface. Meanwhile, any `socat` listener on `*:9222` in WSL2 causes connections targeting `9222` to appear to open and then silently hang until timeout.
+- **In `mirrored` mode**: `socat` squats on port `9222` inside WSL2 and hijacks traffic away from the native mirrored loopback interface if Chrome uses `9222`.
 
 ---
 
