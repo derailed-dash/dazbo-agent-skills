@@ -403,7 +403,11 @@ def test_parse_rubric_supports_backticked_tags_after_bold_id() -> None:
 
 def test_parse_rubric_supports_nested_bold_and_code_id_wrappers() -> None:
     """Parse nested bold+code wrappers like `**`B1`**` while rejecting prose ID cells."""
-    plain_table = "| ID | Condition | Target |\n| :--- | :--- | :--- |\n| **`B1`** | Checks pass | Doc review |\n"
+    plain_table = (
+        "| ID | Condition | Target |\n"
+        "| :--- | :--- | :--- |\n"
+        "| **`B1`** | Checks pass | Doc review |\n"
+    )
     plain_items = eval_rubric.parse_rubric_markdown(plain_table)
     assert [item.id for item in plain_items] == ["B1"]
     assert plain_items[0].category == "mech"

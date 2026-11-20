@@ -10,7 +10,7 @@ install: ## Install Python development and test dependencies with uv
 
 lint: ## Run read-only spelling, Ruff lint/format, and Pyright type checks
 	uv run codespell -s
-	uv run ruff check --diff .
+	uv run ruff check .
 	uv run ruff format --check --diff .
 	uv run pyright
 
