@@ -7,12 +7,31 @@ status: "stable"
 
 # Testing & Quality Assurance
 
-## Static Gates & Verification Tiers
+## Three-Tier Verification Gate
+
+Every code or documentation change flows through an escalating **Tier 1 -> Tier 1.5 -> Tier 2** verification funnel:
+
+### Tier 1 — Deterministic Gate (`make check` / `make check-fast`)
+
+Local linters, typecheckers, and deterministic automated tests run first. Any Tier 1 failure short-circuits immediately before semantic review:
 
 - **Static Quality Gates**: [e.g. `codespell`, `ruff check`, `ruff format --check`, `pyright` — run via `make lint` or `make check`.]
 - **Unit Tests**: [Fast, deterministic, offline tests mocking external APIs and persistence.]
 - **Integration & E2E Tests**: [Tests exercising live or emulated cloud services, containers, or full HTTP servers.]
 - **Frontend / Agent Evals**: [Component/UI test runners or ADK evaluation suites, where applicable.]
+
+### Tier 1.5 — Calibrated Decision Rubric (`make rubric-dry` / `make rubric`)
+
+Evaluates non-`[det]` assertions (`B1`–`Bn` from [docs/SPEC.md](SPEC.md)) in a single zero-output-token prefill pass via `gemini-decision-1` (`eval_rubric.py`, passing e.g. `RUBRIC_ARGS="--base main"`):
+
+- Skips `[det]` gates already proved by Tier 1 shell exit codes.
+- Terminates clear mechanical/`[ui]` passes without spawning a subagent, and fails fast (`FAIL_FAST`) on clear omissions.
+- Marks `[arch]` invariants as `PROVISIONAL_ARCH_PASS` for final Tier 2 review.
+- Degrades gracefully to `Tier 1 -> Tier 2` when `GEMINI_API_KEY` is absent (exit `3`).
+
+### Tier 2 — Stateless Semantic Critic
+
+A fresh, read-only reviewer subagent (with zero prior coding chain-of-thought) invoked only on Tier 1.5 grey-zone escalations or for one final sign-off on `[arch]` assertions once Tier 1 and Tier 1.5 are clear.
 
 ## Local vs CI Execution
 
@@ -32,6 +51,8 @@ status: "stable"
 - **Unit Suite Only**: `make test`
 - **Unit + Integration**: `make test-all`
 - **Targeted File**: `uv run pytest -v tests/unit/[test_file.py]`
+- **Tier 1.5 Offline Dry-Run**: `make rubric-dry`
+- **Tier 1.5 Live Screen**: `make rubric` (pass `RUBRIC_ARGS="--base main"` for PR branches)
 
 ## Manual QA & API Verification
 

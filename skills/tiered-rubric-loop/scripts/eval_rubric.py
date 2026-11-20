@@ -83,19 +83,20 @@ _KNOWN_TAG_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _TABLE_ID_PATTERN = re.compile(
-    r"^\s*(?:\*\*|`)?\s*(B\d+(?:[a-z]\d*)?)(?:\s*`?\[[^\]]+\]`?)*(?:\s*(?:\*\*|`))?(?:\s*`?\[[^\]]+\]`?)*\s*$",
+    r"^(?:\*\*|`|\s)*(B\d+(?:[a-z]\d*)?)(?:(?:\*\*|`|\s)*\[[^\]]+\])*(?:\*\*|`|\s)*$",
     re.IGNORECASE,
 )
 _BULLET_PATTERN = re.compile(
     r"^\s*(?:[-*+]|\d+[.)])\s+"
     r"(?:\[[ xX]\]\s+)?"
-    r"(?:\*\*|`)?\s*(B\d+(?:[a-z]\d*)?)(?:\s*`?\[[^\]]+\]`?)*(?:\s*(?:\*\*|`))?(?:\s*`?\[[^\]]+\]`?)*"
-    r"\s*[:\-–—]\s*(.+?)\s*$",
+    r"(?:\*\*|`)*(?:\s*)(B\d+(?:[a-z]\d*)?)"
+    r"(?:(?:\*\*|`|\s)*\[[^\]]+\])*"
+    r"(?:\*\*|`|\s)*[:\-–—]\s*(.+?)\s*$",
     re.IGNORECASE,
 )
 _DET_TARGET_TOKEN_PATTERN = re.compile(
     r"^(?:"
-    r"make\s+(?:lint|lint-fix|fix|test|test-all|check|ui-test)"
+    r"make\s+(?:lint|lint-fix|fix|test(?:-[a-z0-9-]+)?|check(?:-fast)?|ui-test)"
     r"|(?:uv\s+run(?:\s+--[\w-]+)*\s+)?(?:pytest|codespell|ruff|pyright|mypy)"
     r"(?:\s+[^\s&;|,+]+)*"
     r"|(?:npm|pnpm|yarn)\s+(?:test|run\s+(?:lint|test|check|build)|check|lint)"
@@ -248,7 +249,7 @@ def _is_deterministic_target(target: str) -> bool:
         return False
     parts = [
         p.strip().strip("`")
-        for p in re.split(r"(?:\s+/\s+|\s*(?:&&|;|,)\s*|\s+\band\b\s+)", stripped)
+        for p in re.split(r"(?:\s+[/+]\s+|\s*(?:&&|;|,)\s*|\s+\band\b\s+)", stripped)
     ]
     parts = [p for p in parts if p]
     if not parts:

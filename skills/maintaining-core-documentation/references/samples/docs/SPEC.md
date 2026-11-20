@@ -63,14 +63,14 @@ Deliver the `dazbo-portfolio` web application, conversational ADK assistant, and
 
 | ID | Falsifiable Condition | Verification Target |
 | :--- | :--- | :--- |
-| `B1` | Static gates (`codespell -s`, `ruff check`, `ruff format --check`, `pyright`) exit `0` | `make lint` / `make check` |
-| `B2` | All backend offline unit tests pass without network or GCP credentials | `make test` |
-| `B3` | Frontend component and page tests pass in non-interactive `CI=true` mode | `make ui-test` |
-| `B4` | Path traversal requests (e.g. `/../../etc/passwd`) return `404` and never read outside `frontend/dist` | `tests/unit/test_spa_security.py` |
-| `B5` | Dynamic SEO injection escapes HTML special characters and injects route-specific OG metadata | `tests/unit/test_seo_injection.py` |
-| `B6` | URL normalisation strips query strings and trailing slashes consistently during deduplication | `tests/unit/test_url_normalisation.py` |
-| `B7` | Ingestion `--simulate` performs zero Firestore mutations while printing accurate planned diffs | `tests/unit/test_ingest_pipeline.py` |
-| `B8` | `6th` `/api/chat/stream` request within 60 seconds from one IP receives `HTTP 429` | `tests/unit/test_rate_limiting.py` + `curl` QA |
+| `B1 [det]` | Static gates (`codespell -s`, `ruff check`, `ruff format --check`, `pyright`) exit `0` | `make lint` / `make check` |
+| `B2 [det]` | All backend offline unit tests pass without network or GCP credentials | `make test` |
+| `B3 [det]` | Frontend component and page tests pass in non-interactive `CI=true` mode | `make ui-test` |
+| `B4 [arch]` | Path traversal requests (e.g. `/../../etc/passwd`) return `404` and never read outside `frontend/dist` | `tests/unit/test_spa_security.py` |
+| `B5 [ui]` | Dynamic SEO injection escapes HTML special characters and injects route-specific OG metadata | `tests/unit/test_seo_injection.py` |
+| `B6 [arch]` | URL normalisation strips query strings and trailing slashes consistently during deduplication | `tests/unit/test_url_normalisation.py` |
+| `B7 [arch]` | Ingestion `--simulate` performs zero Firestore mutations while printing accurate planned diffs | `tests/unit/test_ingest_pipeline.py` |
+| `B8 [arch]` | `6th` `/api/chat/stream` request within 60 seconds from one IP receives `HTTP 429` | `tests/unit/test_rate_limiting.py` + `curl` QA |
 
 ## Out of Scope & Open Questions
 

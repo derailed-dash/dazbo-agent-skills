@@ -399,3 +399,48 @@ def test_parse_rubric_supports_backticked_tags_after_bold_id() -> None:
     assert by_id["B1"].category == "det"
     assert by_id["B2"].category == "arch"
     assert by_id["B3"].category == "mech"
+
+
+def test_parse_rubric_supports_nested_bold_and_code_id_wrappers() -> None:
+    """Parse nested bold+code wrappers like `**`B1`**` while rejecting prose ID cells."""
+    plain_table = "| ID | Condition | Target |\n| :--- | :--- | :--- |\n| **`B1`** | Checks pass | Doc review |\n"
+    plain_items = eval_rubric.parse_rubric_markdown(plain_table)
+    assert [item.id for item in plain_items] == ["B1"]
+    assert plain_items[0].category == "mech"
+
+    md = (
+        "| ID | Condition | Target |\n"
+        "| :--- | :--- | :--- |\n"
+        "| **`B1 [det]`** | Static check runs | Doc review |\n"
+        "| **`B2`** `[arch]` | Invariant preserved | `src/sim.py` |\n"
+        "| `**B3**` [ui] | HUD stays frameless | Visual review |\n"
+        "| B7 extra words | Must not parse as rubric ID | Doc review |\n\n"
+        "- **`B4 [arch]`**: Concurrency guard holds\n"
+        "- [ ] **`B5`** [det]: Task item parses cleanly\n"
+    )
+    items = eval_rubric.parse_rubric_markdown(md)
+    by_id = {item.id: item for item in items}
+
+    assert set(by_id) == {"B1", "B2", "B3", "B4", "B5"}
+    assert "B7" not in by_id
+    assert by_id["B1"].category == "det"
+    assert by_id["B2"].category == "arch"
+    assert by_id["B3"].category == "mech"
+    assert by_id["B4"].category == "arch"
+    assert by_id["B5"].category == "det"
+
+
+@pytest.mark.parametrize(
+    ("target", "expected"),
+    [
+        ("make lint + make test", True),
+        ("`make check-fast` + `make test-py`", True),
+        ("make test-ts", True),
+        ("c++ build + make test", False),
+    ],
+)
+def test_deterministic_target_supports_plus_joins_and_make_variants(
+    target: str, expected: bool
+) -> None:
+    """Split whitespace `+`-joined deterministic gates and recognise `make check-fast`/`test-*`."""
+    assert eval_rubric._is_deterministic_target(target) is expected
