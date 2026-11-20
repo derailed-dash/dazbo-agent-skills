@@ -39,7 +39,7 @@ Instead of waking an expensive reasoning subagent on every single pass, or trust
 - [Running Tier 1.5 (`eval_rubric.py`)](#running-tier-15-eval_rubricpy)
 - [Threshold Routing & Stateless Tier 2 Critic](#threshold-routing--stateless-tier-2-critic)
 - [Circuit Breaker Trio & Continuous Ratchet](#circuit-breaker-trio--continuous-ratchet)
-- [Loop Receipt Format (`LOOPS.md`)](#loop-receipt-format-loopsmd)
+- [Loop Receipt Format](#loop-receipt-format)
 
 ---
 
@@ -49,7 +49,7 @@ Instead of waking an expensive reasoning subagent on every single pass, or trust
 | :--- | :--- | :--- | :--- |
 | **Tier 1 (Deterministic)** | Local linters, typecheckers, unit tests (`make check`, `codespell`, `ruff`, `pyright`, `pytest`) | Seconds, **`$0`** | Syntax, static types, formatting, and deterministic test execution. Any failure **short-circuits immediately** before Tier 1.5 or Tier 2 runs. |
 | **Tier 1.5 (Calibrated Probabilistic)** | `gemini-decision-1` via `client.decisions.create` (`v1beta`) in [`scripts/eval_rubric.py`](scripts/eval_rubric.py) | **~150–250 ms**, **`$0.10` / 1M input tokens**, **0 output / thinking tokens** | Evaluates up to 1,000 closed-ended `noul` (yes/no) assertions over a single shared diff/spec/media payload. Terminates clear mechanical passes (`PASS`), rejects obvious omissions immediately (`FAIL_FAST`), and flags uncertain items for L2. |
-| **Tier 2 (Stateless Semantic Critic)** | Fresh read-only `flash` subagent with zero prior coding chain-of-thought | 10–40 s, standard model tokens | Diagnoses grey-zone escalations and performs **one final L2 sign-off** on `[arch]` items after Tier 1.5 is green. |
+| **Tier 2 (Stateless Semantic Critic)** | Fresh read-only subagent (`Model: "flash"` for mechanical grey-zones; `Model: "inherit"` — or `Model: "pro"` for frontier escalation — on `[arch]` items) with zero prior coding chain-of-thought | 10–40 s, standard model tokens | Diagnoses grey-zone escalations and performs **one final L2 sign-off** on `[arch]` items after Tier 1.5 is green. |
 
 **Key safety rule**: Because `gemini-decision-1` runs in a single prefill forward pass with **zero thinking tokens** and **zero file-reading tools**, it can produce false positives on subtle logic, race conditions, or auth flaws. Therefore, Tier 1.5 is **terminal** for mechanical/editorial checks, **fail-fast** on clear omissions, and **provisional** for `[arch]` assertions.
 
@@ -79,7 +79,7 @@ Other supported rubric formats and tags:
 | :--- | :--- | :--- |
 | `[det]` (or deterministic Verification Target such as `make check`, `pytest tests/...`, `codespell -s`, `ruff check .`) | Already proven by Tier 1 shell exit codes | **Skipped by Tier 1.5** by default (`--include-det` overrides) so the model never guesses whether `pytest` passed from a text diff. |
 | *(untagged, `[mech]`, `[docs]`, `[ui]`, `[visual]`, `[multimodal]`)* | Mechanical, editorial, doc-sync, schema, or UI convention check | **Terminal `PASS`** when `P(yes) >= 0.90`, `confidence >= 0.80`, and **no evidence was truncated**; `FAIL_FAST` when `<= 0.20`; otherwise `ESCALATE_L2_FLASH`. |
-| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final Tier 2 (`Model: "flash"`) review** once all items clear Tier 1.5. |
+| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final Tier 2 (`Model: "inherit"`, or `Model: "pro"` for frontier escalation) review** once all items clear Tier 1.5. |
 
 Repo-relative file paths and local images named in `Verification Target` or inline backticks are **automatically resolved and attached** (blocking `.env`, secret env files, `*.enc`, and paths outside `--repo-root`; pass `--no-auto-target-files` to disable).
 
@@ -99,7 +99,7 @@ Repo-relative file paths and local images named in `Verification Target` or inli
 | :--- | :--- | :--- |
 | `maintaining-core-documentation` / `spec-driven-development` | Reads `B1`–`Bn` directly from `docs/SPEC.md` or `SPEC.md`. | Reads any local `SPEC.md` / `LOOPS.md`, or asks you to agree a compact `B1`–`Bn` list inline before coding. |
 | `test-driven-development` | Delegates the **Act** step to full Red-Green-Refactor execution. | Enforces the core TDD rule inline: write/update a failing test first, change one semantic behaviour per pass, never weaken assertions. |
-| `loopy` | Supplies the outer `Observe -> Choose -> Act -> Verify -> Record -> Stop` governance and `LOOPS.md` receipts. | Runs the identical bounded loop directly with the receipt format below. |
+| `loopy` | Supplies the outer `Observe -> Choose -> Act -> Verify -> Record -> Stop` governance, saved reusable loops in `LOOPS.md`, and conversation run receipts. | Runs the identical bounded loop directly with the receipt format below. |
 | `local-code-review` | Stateless Tier 2 read-only subagent runs `local-code-review` on escalated/`[arch]` items. | Uses the built-in **Stateless Tier 2 Critic Prompt** below. |
 | `GEMINI_API_KEY` / `GOOGLE_API_KEY` | Enables ~200 ms Tier 1.5 screening via `eval_rubric.py`. | When `eval_rubric.py` exits `3` (missing/invalid key), skips Tier 1.5 cleanly and executes `Tier 1 -> Tier 2` directly while noting how to enable Tier 1.5. |
 
@@ -116,7 +116,7 @@ Track every pass around **`Observe -> Choose -> Act -> Verify -> Record -> Stop`
    - **Tier 1**: Run deterministic checks (`make check` or repo lint + test commands). If Tier 1 fails, **stop verification immediately** and return to **Choose/Act**—do not spend tokens on Tier 1.5 or Tier 2.
    - **Tier 1.5**: Run `eval_rubric.py --json` over the spec, diff, and touched files (plus `--image` / `--pdf` for diagram/UI specs).
    - **Tier 2**: Escalate only grey-zone items immediately, or run a single final `[arch]` critic pass once Tier 1.5 reports zero `FAIL_FAST` and zero grey-zone items.
-5. **Record**: Append pass outcome, `ratchet_score` (mean `P(yes)`), and remaining failures to `LOOPS.md` (or session progress notes).
+5. **Record**: Track pass outcome, `ratchet_score` (mean `P(yes)`), and remaining failures in the conversation receipt (do not create or append to `LOOPS.md` by default; persist to disk only when requested or required by an established project convention).
 6. **Repeat or Stop**: Enforce the **Circuit Breaker Trio** before starting another pass.
 
 ---
@@ -157,7 +157,7 @@ For large PRs (`> 8` files or `> 100 KB`), shard evaluations by assertion group 
 
 | Code | Meaning | Loop Action |
 | :--- | :--- | :--- |
-| `0` | Tier 1.5 clear (all evaluated items are `PASS` or `PROVISIONAL_ARCH_PASS`) | If `final_l2_arch_ids` is non-empty, run **one** Tier 2 (`Model: "flash"`) critic pass on those IDs; otherwise exit loop as **`Success`**. |
+| `0` | Tier 1.5 clear (all evaluated items are `PASS` or `PROVISIONAL_ARCH_PASS`) | If `final_l2_arch_ids` is non-empty, run **one** Tier 2 (`Model: "inherit"`, or `Model: "pro"` for frontier escalation) critic pass on those IDs; otherwise exit loop as **`Success`**. |
 | `1` | One or more `FAIL_FAST` or `ESCALATE_L2_*` items (or API call error) | Address `FAIL_FAST` items directly; escalate grey-zone items (`ESCALATE_L2_*`) only when root cause is non-obvious. |
 | `2` | Usage error, missing spec, or no `B1`–`Bn` assertions parsed | Fix spec path or rubric formatting before continuing. |
 | `3` | Missing/invalid `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Degrade gracefully to **`Tier 1 -> Tier 2`** and inform the user once. |
@@ -168,13 +168,13 @@ For large PRs (`> 8` files or `> 100 KB`), shard evaluations by assertion group 
 
 Default calibrated thresholds (overridable via `--pass-threshold`, `--fail-threshold`, `--min-confidence`):
 - **`PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, mechanical): **Terminal pass.** No L2 model runs.
-- **`PROVISIONAL_ARCH_PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, `[arch]`): Held until all other assertions pass, then verified once by a Tier 2 (`Model: "flash"`) critic.
+- **`PROVISIONAL_ARCH_PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, `[arch]`): Held until all other assertions pass, then verified once by a Tier 2 (`Model: "inherit"`, or `Model: "pro"` for frontier escalation) critic.
 - **`FAIL_FAST`** (`P(yes) <= 0.20`, `confidence >= 0.80`): Returned directly to the coding agent—do **not** burn an L2 turn repeating an obvious omission.
-- **`ESCALATE_L2_FLASH`** (`0.20 < P(yes) < 0.90` or `confidence < 0.80`): Escalate **only those specific `Bi` IDs** to a fresh read-only subagent.
+- **`ESCALATE_L2_FLASH`** (`0.20 < P(yes) < 0.90` or `confidence < 0.80`): Escalate **only those specific `Bi` IDs** to a fresh read-only subagent (`Model: "flash"` for mechanical items; `Model: "inherit"` — or `Model: "pro"` — for `[arch]` items).
 
 ### Subagent Routing Across Coding Agents
 
-Always spawn Tier 2 as a **fresh, stateless, read-only subagent** that never sees the coding agent's prior chain-of-thought or failed attempts. When spawning, use a fast or flash agent. For example, in **Antigravity**, call `invoke_subagent` with `TypeName: "research"` and `Model: "flash"`.
+Always spawn Tier 2 as a **fresh, stateless, read-only subagent** that never sees the coding agent's prior chain-of-thought or failed attempts. In **Antigravity**, call `invoke_subagent` with `TypeName: "research"` and `Model: "flash"` for mechanical grey-zone escalations, or `Model: "inherit"` (or `Model: "pro"` to escalate to frontier judgement from a faster orchestrator like Neon) for `[arch]` escalations and final `[arch]` sign-off.
 
 ### Built-In Stateless Tier 2 Critic Prompt
 
@@ -200,7 +200,7 @@ Rules:
 
 Stop the loop whenever **any** of these three conditions triggers:
 
-1. **100% Pass**: Tier 1 passes, Tier 1.5 reports `exit_code == 0`, and any `final_l2_arch_ids` clear their final Tier 2 (`Model: "flash"`) review (**`Success`**).
+1. **100% Pass**: Tier 1 passes, Tier 1.5 reports `exit_code == 0`, and any `final_l2_arch_ids` clear their final Tier 2 (`Model: "inherit"` / `"pro"`) review (**`Success`**).
 2. **Pass Budget Exhausted**: Maximum **4–5 passes** per slice reached (**`Exhausted`**—escalate remaining blockers to the user).
 3. **2 Consecutive Non-Improving Passes**: Neither failing assertion count decreases **nor** `ratchet_score` (mean `P(yes)` across evaluated `B1`–`Bn` items) improves across two consecutive passes (**`No progress`**—escalate to the user rather than spinning).
 
@@ -208,9 +208,9 @@ Tracking the continuous `ratchet_score` avoids premature stalls when a pass genu
 
 ---
 
-## Loop Receipt Format (`LOOPS.md`)
+## Loop Receipt Format
 
-Record completed runs (or append per-pass telemetry) concisely:
+Return completed run receipts concisely in the conversation (persist to disk only when explicitly requested or when an established project convention uses a receipt file — keep `LOOPS.md` for saved reusable loop definitions and `B1`–`Bn` rubrics):
 
 ```markdown
 ## Tiered Rubric Loop Receipt
@@ -220,6 +220,6 @@ Record completed runs (or append per-pass telemetry) concisely:
 - **Passes**: [N / 5] | **Outcome**: `Success` | `Exhausted` | `No progress` | `Blocked`
 - **Tier 1**: `make check` -> PASS
 - **Tier 1.5 Ratchet (`gemini-decision-1`)**: `0.58 -> 0.94 -> 0.98` (skipped `[det]`: `B1`)
-- **Tier 2 (`Model: "flash"`)**: Verified `[arch]` IDs `B3` -> PASS
+- **Tier 2 (`Model: "inherit"`)**: Verified `[arch]` IDs `B3` -> PASS
 - **Remaining / Escalation**: None (or exact failing `Bi` + file:line)
 ```
