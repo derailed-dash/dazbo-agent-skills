@@ -2,12 +2,15 @@
 name: organise-agent-skills
 description: |
   Standardised workflow for auditing, cleaning, de-duplicating, pruning, and organising
-  agent skills in Antigravity and Gemini environments. Performs filesystem auto-discovery,
-  orphan pruning, and `skills.json` synchronisation to keep prompt context overhead lean
-  (~30–50 active skills). Use when auditing, cleaning, or de-duplicating installed skills,
-  auto-syncing `skills.json` against disk, pruning token bloat, disabling sub-skills
-  managed by meta-skills, or writing on-demand activation rules in `config/rules/on-demand-skills.md`,
-  `GEMINI.md`, or `AGENTS.md`.
+  standalone and plugin-bundled agent skills in Antigravity and Gemini environments.
+  Performs filesystem auto-discovery across standalone skills and plugins, orphan pruning,
+  plugin skill parking (`skills.all/`) and supersession checks, and `skills.json`
+  synchronisation to keep prompt context overhead lean (~30–50 active skills). Use when
+  auditing, cleaning, or de-duplicating installed standalone or plugin skills, managing
+  bulky plugins (`config/config.json` / `skills.all/`), auto-syncing `skills.json`
+  against disk, pruning token bloat, disabling sub-skills managed by meta-skills, or
+  writing on-demand activation rules in `config/rules/on-demand-skills.md`, `GEMINI.md`,
+  or `AGENTS.md`.
 metadata:
   author: Darren "Dazbo" Lester
   repository: https://github.com/derailed-dash/dazbo-agent-skills
@@ -18,7 +21,7 @@ metadata:
 > [!IMPORTANT]
 > **Mandatory User Confirmation Guardrail**: The agent MUST NOT delete any skill directories, disable/enable skills in configuration files (`skills.json`), or mutate configuration/rules documents (`config/rules/*.md`, `GEMINI.md`, `AGENTS.md`, `README.md`) without first presenting the audit findings, proposed actions, and token metrics to the user and receiving explicit confirmation to proceed.
 
-This skill provides a repeatable workflow for **auditing, cleaning, de-duplicating, and organising** agent skills in Antigravity and Gemini environments. It keeps your startup prompt context lean (~30–50 active skills / ~3,000 tokens per turn) and synchronises `skills.json` against disk without losing access to any skill in your library.
+This skill provides a repeatable workflow for **auditing, cleaning, de-duplicating, and organising** standalone and plugin-bundled agent skills in Antigravity and Gemini environments. It keeps your startup prompt context lean (~30–50 active skills / ~3,000 tokens per turn) and synchronises `skills.json` against disk without losing access to any skill in your library.
 
 ## Table of Contents
 
