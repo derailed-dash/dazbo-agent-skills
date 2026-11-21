@@ -362,24 +362,32 @@ def test_explicit_file_outside_repo_root_accepted_while_secrets_blocked(tmp_path
     assert "SECRET=1" not in bundle.text
 
 
-def test_arch_items_always_route_to_flash() -> None:
-    """Route both provisional passes and grey-zone [arch] items to flash (never inherit)."""
+def test_arch_items_route_to_inherit_and_mechanical_to_flash() -> None:
+    """Route [arch] items to inherit (`ESCALATE_L2_ARCH`) and [mech] grey-zones to flash."""
     pass_arch = eval_rubric.RubricItem(id="B3", condition="Token check", category="arch")
     grey_arch = eval_rubric.RubricItem(id="B4", condition="Concurrency guard", category="arch")
+    grey_mech = eval_rubric.RubricItem(id="B5", condition="Docs match flags", category="mech")
     answers: dict[str, Any] = {
         "B3": {"noul": 0.96, "confidence": 0.92},
         "B4": {"noul": 0.55, "confidence": 0.70},
+        "B5": {"noul": 0.55, "confidence": 0.70},
     }
 
-    evaluation = eval_rubric.evaluate_answers(items=[pass_arch, grey_arch], answers=answers)
+    evaluation = eval_rubric.evaluate_answers(
+        items=[pass_arch, grey_arch, grey_mech],
+        answers=answers,
+    )
     verdicts_by_id = {v.id: v for v in evaluation.verdicts}
 
     assert verdicts_by_id["B3"].status == "PROVISIONAL_ARCH_PASS"
-    assert verdicts_by_id["B3"].l2_model == "flash"
-    assert verdicts_by_id["B4"].status == "ESCALATE_L2_FLASH"
-    assert verdicts_by_id["B4"].l2_model == "flash"
+    assert verdicts_by_id["B3"].l2_model == "inherit"
+    assert verdicts_by_id["B4"].status == "ESCALATE_L2_ARCH"
+    assert verdicts_by_id["B4"].l2_model == "inherit"
+    assert verdicts_by_id["B5"].status == "ESCALATE_L2_FLASH"
+    assert verdicts_by_id["B5"].l2_model == "flash"
     assert evaluation.final_l2_arch_ids == ["B3"]
-    assert evaluation.escalate_flash_ids == ["B4"]
+    assert evaluation.escalate_arch_ids == ["B4"]
+    assert evaluation.escalate_flash_ids == ["B5"]
     assert evaluation.exit_code == 1
 
 
@@ -448,3 +456,126 @@ def test_deterministic_target_supports_plus_joins_and_make_variants(
 ) -> None:
     """Split whitespace `+`-joined deterministic gates and recognise `make check-fast`/`test-*`."""
     assert eval_rubric._is_deterministic_target(target) is expected
+
+
+def test_default_evidence_caps_sized_for_single_batch() -> None:
+    """Default caps fit 800-line files and single-batch multi-file rubrics without truncating."""
+    assert eval_rubric.DEFAULT_MAX_FILE_CHARS == 48_000
+    assert eval_rubric.DEFAULT_MAX_EVIDENCE_CHARS == 500_000
+
+
+def test_rate_limit_gaos_error_degrades_gracefully_with_exit_3(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Non-APIError google.genai 429/spend-cap exceptions must emit JSON and return exit code 3."""
+    import google.genai as real_genai
+
+    _init_git_repo(tmp_path)
+    (tmp_path / "SPEC.md").write_text(
+        "# Spec\n\n- **B2**: README exists (`README.md`)\n", encoding="utf-8"
+    )
+
+    class FakeRateLimitError(Exception):
+        """Synthetic google.genai._gaos RateLimitError without inheriting APIError."""
+
+    FakeRateLimitError.__module__ = "google.genai._gaos.lib.compat_errors"
+
+    class _FakeDecisions:
+        def create(self, **kwargs: Any) -> Any:
+            raise FakeRateLimitError(
+                "Error code: 429 - {'error': {'message': "
+                "'Your project has exceeded its monthly spending cap.', "
+                "'code': 'too_many_requests'}}"
+            )
+
+    class _FakeClient:
+        def __init__(self, **kwargs: Any) -> None:
+            self.decisions = _FakeDecisions()
+
+    monkeypatch.setattr(real_genai, "Client", _FakeClient)
+
+    with pytest.raises(eval_rubric.DecisionsApiError) as exc_info:
+        eval_rubric.call_decisions_api(
+            api_key="test-key",
+            model="gemini-decision-1",
+            decision_input="evidence",
+            questions={"B2": {"type": "noul"}},
+        )
+    assert exc_info.value.is_auth_error is False
+    assert exc_info.value.is_fallback_error is True
+
+    rc = eval_rubric.main(["--repo-root", str(tmp_path), "--api-key", "test-key", "--json"])
+    assert rc == 3
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["error"] == "quota_exceeded"
+    assert "spending cap" in payload["message"]
+    assert "Tier 2" in payload["fallback_action"]
+
+
+def test_target_first_ordering_targets_only_and_per_item_truncation_scoping(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Prioritise active target files ahead of dirty tree files and scope truncation checks."""
+    _init_git_repo(tmp_path)
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "audio.py").write_text("AUDIO_OK = True\n", encoding="utf-8")
+    (tmp_path / "dirty_other.py").write_text("x = 1\n" * 150, encoding="utf-8")
+    spec_path = tmp_path / "SPEC.md"
+    spec_path.write_text(
+        "| ID | Condition | Verification Target |\n"
+        "| :--- | :--- | :--- |\n"
+        "| `B6` | Audio module ok | `src/audio.py` |\n",
+        encoding="utf-8",
+    )
+    _run_git(tmp_path, "add", "SPEC.md", "src/audio.py")
+    _run_git(tmp_path, "commit", "-m", "feat: add audio module and spec")
+
+    items = eval_rubric.parse_rubric_markdown(spec_path.read_text(encoding="utf-8"))
+    bundle = eval_rubric.collect_repo_evidence_bundle(
+        repo_root=tmp_path,
+        spec_path=spec_path,
+        items=items,
+        max_chars=520,
+    )
+    assert bundle.evidence_files[0] == "src/audio.py"
+    assert "AUDIO_OK = True" in bundle.text
+    assert "combined_evidence" in bundle.truncated_sources
+    assert bundle.item_target_files["B6"] == {"src/audio.py"}
+
+    rc = eval_rubric.main(["--repo-root", str(tmp_path), "--targets-only", "--dry-run", "--json"])
+    assert rc == 0
+    dry = json.loads(capsys.readouterr().out)
+    assert "src/audio.py" in dry["evidence_files"]
+    assert "dirty_other.py" not in dry["evidence_files"]
+
+    item_b2 = eval_rubric.RubricItem(id="B2", condition="HUD tests pass", category="mech")
+    item_b6 = eval_rubric.RubricItem(id="B6", condition="Audio module ok", category="mech")
+    answers: dict[str, Any] = {
+        "B2": {"noul": 0.96, "confidence": 0.95},
+        "B6": {"noul": 0.96, "confidence": 0.95},
+    }
+    target_map = {
+        "B2": {"tests/sim/phase1HudAndCampaign.test.ts"},
+        "B6": {"src/audio.py"},
+    }
+
+    scoped = eval_rubric.evaluate_answers(
+        items=[item_b2, item_b6],
+        answers=answers,
+        truncated_sources=["tests/sim/phase1HudAndCampaign.test.ts"],
+        item_target_files=target_map,
+        spec_label="SPEC.md",
+    )
+    scoped_map = {v.id: v for v in scoped.verdicts}
+    assert scoped_map["B2"].status == "ESCALATE_L2_FLASH"
+    assert scoped_map["B6"].status == "PASS"
+
+    for global_trunc in ("combined_evidence", "SPEC.md", "src/audio.py"):
+        hit = eval_rubric.evaluate_answers(
+            items=[item_b6],
+            answers={"B6": {"noul": 0.96, "confidence": 0.95}},
+            truncated_sources=[global_trunc],
+            item_target_files=target_map,
+            spec_label="SPEC.md",
+        )
+        assert hit.verdicts[0].status == "ESCALATE_L2_FLASH"

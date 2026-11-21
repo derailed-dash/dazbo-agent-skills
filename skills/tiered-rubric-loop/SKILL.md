@@ -79,7 +79,7 @@ Other supported rubric formats and tags:
 | :--- | :--- | :--- |
 | `[det]` (or deterministic Verification Target such as `make check`, `pytest tests/...`, `codespell -s`, `ruff check .`) | Already proven by Tier 1 shell exit codes | **Skipped by Tier 1.5** by default (`--include-det` overrides) so the model never guesses whether `pytest` passed from a text diff. |
 | *(untagged, `[mech]`, `[docs]`, `[ui]`, `[visual]`, `[multimodal]`)* | Mechanical, editorial, doc-sync, schema, or UI convention check | **Terminal `PASS`** when `P(yes) >= 0.90`, `confidence >= 0.80`, and **no evidence was truncated**; `FAIL_FAST` when `<= 0.20`; otherwise `ESCALATE_L2_FLASH`. |
-| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** at Tier 1.5; gated for **one final Tier 2 (`Model: "inherit"`, or `Model: "pro"` for frontier escalation) review** once all items clear Tier 1.5. |
+| `[arch]` (also `[security]`, `[logic]`, `[concurrency]`, `[perf]`) | Concurrency, security, state invariant, performance, or test-realism check | **Provisional pass (`PROVISIONAL_ARCH_PASS`)** when confident (`Model: "inherit"` / `"pro"` final Tier 2 review); `FAIL_FAST` when `<= 0.20`; otherwise `ESCALATE_L2_ARCH` (`Model: "inherit"` / `"pro"`). |
 
 Repo-relative file paths and local images named in `Verification Target` or inline backticks are **automatically resolved and attached** (blocking `.env`, secret env files, `*.enc`, and paths outside `--repo-root`; pass `--no-auto-target-files` to disable).
 
@@ -101,7 +101,7 @@ Repo-relative file paths and local images named in `Verification Target` or inli
 | `test-driven-development` | Delegates the **Act** step to full Red-Green-Refactor execution. | Enforces the core TDD rule inline: write/update a failing test first, change one semantic behaviour per pass, never weaken assertions. |
 | `loopy` | Supplies the outer `Observe -> Choose -> Act -> Verify -> Record -> Stop` governance, saved reusable loops in `LOOPS.md`, and conversation run receipts. | Runs the identical bounded loop directly with the receipt format below. |
 | `local-code-review` | Stateless Tier 2 read-only subagent runs `local-code-review` on escalated/`[arch]` items. | Uses the built-in **Stateless Tier 2 Critic Prompt** below. |
-| `GEMINI_API_KEY` / `GOOGLE_API_KEY` | Enables ~200 ms Tier 1.5 screening via `eval_rubric.py`. | When `eval_rubric.py` exits `3` (missing/invalid key), skips Tier 1.5 cleanly and executes `Tier 1 -> Tier 2` directly while noting how to enable Tier 1.5. |
+| `GEMINI_API_KEY` / `GOOGLE_API_KEY` | Enables ~200 ms Tier 1.5 screening via `eval_rubric.py`. | When `eval_rubric.py` exits `3` (missing/invalid key or `429` quota/spend-cap block), skips Tier 1.5 cleanly and executes `Tier 1 -> Tier 2` directly while noting how to enable Tier 1.5. |
 
 ---
 
@@ -151,16 +151,16 @@ uv run ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py \
 uv run --offline ~/.gemini/config/skills/tiered-rubric-loop/scripts/eval_rubric.py --dry-run --json
 ```
 
-For large PRs (`> 8` files or `> 100 KB`), shard evaluations by assertion group via `--only B3,B4` so files stay within `--max-file-chars` (`24,000`) and `--max-evidence-chars` (`180,000`). If any file or combined payload is truncated, `eval_rubric.py` populates `truncated_sources` and **downgrades mechanical `PASS` to `ESCALATE_L2_FLASH`** unless `--allow-truncated-pass` is explicitly set.
+Default caps (`--max-file-chars 48000`, `--max-evidence-chars 500000`) fit most multi-file reviews in a single batched pass within `gemini-decision-1`'s `262k`-token window. Target files referenced by the evaluated assertions are attached ahead of general working-tree diffs, and `--targets-only` or `--only B3,B4` keeps huge PRs uncluttered. If any source relevant to a mechanical assertion is truncated, `eval_rubric.py` populates `truncated_sources` and **downgrades mechanical `PASS` to `ESCALATE_L2_FLASH`** unless `--allow-truncated-pass` is explicitly set.
 
 ### Exit Codes
 
 | Code | Meaning | Loop Action |
 | :--- | :--- | :--- |
 | `0` | Tier 1.5 clear (all evaluated items are `PASS` or `PROVISIONAL_ARCH_PASS`) | If `final_l2_arch_ids` is non-empty, run **one** Tier 2 (`Model: "inherit"`, or `Model: "pro"` for frontier escalation) critic pass on those IDs; otherwise exit loop as **`Success`**. |
-| `1` | One or more `FAIL_FAST` or `ESCALATE_L2_*` items (or API call error) | Address `FAIL_FAST` items directly; escalate grey-zone items (`ESCALATE_L2_*`) only when root cause is non-obvious. |
+| `1` | One or more `FAIL_FAST`, `ESCALATE_L2_FLASH`, or `ESCALATE_L2_ARCH` items (or API call error) | Address `FAIL_FAST` items directly; escalate grey-zone items (`ESCALATE_L2_FLASH` / `ESCALATE_L2_ARCH`) only when root cause is non-obvious. |
 | `2` | Usage error, missing spec, or no `B1`–`Bn` assertions parsed | Fix spec path or rubric formatting before continuing. |
-| `3` | Missing/invalid `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Degrade gracefully to **`Tier 1 -> Tier 2`** and inform the user once. |
+| `3` | Missing/invalid `GEMINI_API_KEY` / `GOOGLE_API_KEY` or `429` quota/spending-cap block | Degrade gracefully to **`Tier 1 -> Tier 2`** and inform the user once. |
 
 ---
 
@@ -170,7 +170,7 @@ Default calibrated thresholds (overridable via `--pass-threshold`, `--fail-thres
 - **`PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, mechanical): **Terminal pass.** No L2 model runs.
 - **`PROVISIONAL_ARCH_PASS`** (`P(yes) >= 0.90`, `confidence >= 0.80`, `[arch]`): Held until all other assertions pass, then verified once by a Tier 2 (`Model: "inherit"`, or `Model: "pro"` for frontier escalation) critic.
 - **`FAIL_FAST`** (`P(yes) <= 0.20`, `confidence >= 0.80`): Returned directly to the coding agent—do **not** burn an L2 turn repeating an obvious omission.
-- **`ESCALATE_L2_FLASH`** (`0.20 < P(yes) < 0.90` or `confidence < 0.80`): Escalate **only those specific `Bi` IDs** to a fresh read-only subagent (`Model: "flash"` for mechanical items; `Model: "inherit"` — or `Model: "pro"` — for `[arch]` items).
+- **`ESCALATE_L2_FLASH`** (`0.20 < P(yes) < 0.90` or `confidence < 0.80`, mechanical) & **`ESCALATE_L2_ARCH`** (`[arch]`): Escalate **only those specific `Bi` IDs** to a fresh read-only subagent (`Model: "flash"` for `ESCALATE_L2_FLASH`; `Model: "inherit"` — or `Model: "pro"` — for `ESCALATE_L2_ARCH`).
 
 ### Subagent Routing Across Coding Agents
 

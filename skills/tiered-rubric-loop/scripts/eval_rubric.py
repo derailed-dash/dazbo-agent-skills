@@ -20,9 +20,9 @@ Value:
        expensive Layer-2 review subagents, unless evidence was truncated.
     2. Fails fast (`FAIL_FAST`) on clear omissions directly back to the coding
        loop instead of wasting a semantic critic turn.
-    3. Escalates grey-zone items (`ESCALATE_L2_FLASH`)
+    3. Escalates grey-zone items (`ESCALATE_L2_FLASH` / `ESCALATE_L2_ARCH`)
        and gates `[arch]` assertions (`PROVISIONAL_ARCH_PASS`) for one final
-       Tier 2 Flash review before declaring success.
+       Tier 2 review before declaring success.
     4. Supports both working-tree loops and branch/PR gating (`--base`,
        `--git-range`), auto-attaches repo-relative target files safely, and
        computes a continuous mean `P(yes)` `ratchet_score`.
@@ -53,9 +53,9 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_MODEL = "gemini-decision-1"
-DEFAULT_MAX_FILE_CHARS = 24_000
+DEFAULT_MAX_FILE_CHARS = 48_000
 DEFAULT_MAX_DIFF_CHARS = 60_000
-DEFAULT_MAX_EVIDENCE_CHARS = 180_000
+DEFAULT_MAX_EVIDENCE_CHARS = 500_000
 MAX_AUTO_IMAGES = 8
 DEFAULT_ENV_FILES: list[Path] = [
     Path.home() / ".gemini" / ".env",
@@ -149,9 +149,20 @@ class MissingApiKeyError(RuntimeError):
 class DecisionsApiError(RuntimeError):
     """Raised when the Gemini Decisions API request fails."""
 
-    def __init__(self, message: str, is_auth_error: bool = False) -> None:
+    def __init__(
+        self,
+        message: str,
+        is_auth_error: bool = False,
+        is_quota_error: bool = False,
+    ) -> None:
         super().__init__(message)
         self.is_auth_error = is_auth_error
+        self.is_quota_error = is_quota_error
+
+    @property
+    def is_fallback_error(self) -> bool:
+        """Return True when the caller should degrade cleanly to Tier 2 (exit 3)."""
+        return self.is_auth_error or self.is_quota_error
 
 
 @dataclass(frozen=True)
@@ -187,6 +198,8 @@ class EvidenceBundle:
     evidence_chars: int = 0
     truncated_sources: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    spec_label: str = ""
+    item_target_files: dict[str, set[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -200,6 +213,7 @@ class RubricEvaluation:
     final_l2_arch_ids: list[str] = field(default_factory=list)
     fail_fast_ids: list[str] = field(default_factory=list)
     escalate_flash_ids: list[str] = field(default_factory=list)
+    escalate_arch_ids: list[str] = field(default_factory=list)
     latency_ms: float | None = None
     input_tokens: int | None = None
     evidence_files: list[str] = field(default_factory=list)
@@ -552,8 +566,8 @@ def _safe_read_text(path: Path, max_file_chars: int = DEFAULT_MAX_FILE_CHARS) ->
     return None if result is None else result[0]
 
 
-def _extract_target_candidates(items: list[RubricItem]) -> list[str]:
-    """Extract candidate repo-relative paths from assertion targets and inline backticks."""
+def _extract_item_target_candidates(item: RubricItem) -> list[str]:
+    """Extract candidate repo-relative paths from one rubric assertion."""
     candidates: list[str] = []
     seen: set[str] = set()
 
@@ -568,15 +582,26 @@ def _extract_target_candidates(items: list[RubricItem]) -> list[str]:
             seen.add(cleaned)
             candidates.append(cleaned)
 
-    for item in items:
-        for span_match in _INLINE_CODE_SPAN_PATTERN.finditer(item.condition):
-            _add_candidate(span_match.group(1))
-        for span_match in _INLINE_CODE_SPAN_PATTERN.finditer(item.target):
-            _add_candidate(span_match.group(1))
-        stripped_target = _INLINE_CODE_SPAN_PATTERN.sub(" ", item.target)
-        for token in re.split(r"[\s,+;|]+", stripped_target):
-            _add_candidate(token)
+    for span_match in _INLINE_CODE_SPAN_PATTERN.finditer(item.condition):
+        _add_candidate(span_match.group(1))
+    for span_match in _INLINE_CODE_SPAN_PATTERN.finditer(item.target):
+        _add_candidate(span_match.group(1))
+    stripped_target = _INLINE_CODE_SPAN_PATTERN.sub(" ", item.target)
+    for token in re.split(r"[\s,+;|]+", stripped_target):
+        _add_candidate(token)
 
+    return candidates
+
+
+def _extract_target_candidates(items: list[RubricItem]) -> list[str]:
+    """Extract candidate repo-relative paths from assertion targets and inline backticks."""
+    candidates: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        for candidate in _extract_item_target_candidates(item):
+            if candidate not in seen:
+                seen.add(candidate)
+                candidates.append(candidate)
     return candidates
 
 
@@ -630,6 +655,7 @@ def _collect_git_range_evidence(
     evidence_files: list[str],
     auto_images: list[Path],
     truncated_sources: list[str],
+    include_file_bodies: bool = True,
 ) -> bool:
     """Collect changed files and diff for a branch/commit `--git-range` or `--base`."""
     names_res = _run_git(repo_root, ["diff", "--name-only", "--diff-filter=ACMR", git_range])
@@ -652,17 +678,18 @@ def _collect_git_range_evidence(
         ):
             auto_images.append(candidate)
             continue
-        _add_evidence_file(
-            path=candidate,
-            label=entry,
-            header="Changed File",
-            repo_root=repo_root,
-            max_file_chars=max_file_chars,
-            included_paths=included_paths,
-            sections=sections,
-            evidence_files=evidence_files,
-            truncated_sources=truncated_sources,
-        )
+        if include_file_bodies:
+            _add_evidence_file(
+                path=candidate,
+                label=entry,
+                header="Changed File",
+                repo_root=repo_root,
+                max_file_chars=max_file_chars,
+                included_paths=included_paths,
+                sections=sections,
+                evidence_files=evidence_files,
+                truncated_sources=truncated_sources,
+            )
 
     diff_res = _run_git(repo_root, ["diff", git_range])
     if diff_res and diff_res.returncode == 0 and diff_res.stdout.strip():
@@ -682,30 +709,32 @@ def _collect_working_tree_git_evidence(
     sections: list[str],
     evidence_files: list[str],
     truncated_sources: list[str],
+    include_file_bodies: bool = True,
 ) -> bool:
     """Collect uncommitted git status/diff and touched working-tree files."""
     diff_added = False
     status_res = _run_git(repo_root, ["status", "--short"])
     if status_res and status_res.returncode == 0 and status_res.stdout.strip():
         sections.append(f"## Git Status\n\n```text\n{status_res.stdout.strip()}\n```")
-        for line in status_res.stdout.splitlines():
-            if len(line) < 4:
-                continue
-            rel_entry = line[3:].strip().split(" -> ")[-1].strip().strip('"')
-            candidate = _resolve_repo_relative_path(rel_entry, repo_root)
-            if candidate is None:
-                continue
-            _add_evidence_file(
-                path=candidate,
-                label=rel_entry,
-                header="Changed File",
-                repo_root=repo_root,
-                max_file_chars=max_file_chars,
-                included_paths=included_paths,
-                sections=sections,
-                evidence_files=evidence_files,
-                truncated_sources=truncated_sources,
-            )
+        if include_file_bodies:
+            for line in status_res.stdout.splitlines():
+                if len(line) < 4:
+                    continue
+                rel_entry = line[3:].strip().split(" -> ")[-1].strip().strip('"')
+                candidate = _resolve_repo_relative_path(rel_entry, repo_root)
+                if candidate is None:
+                    continue
+                _add_evidence_file(
+                    path=candidate,
+                    label=rel_entry,
+                    header="Changed File",
+                    repo_root=repo_root,
+                    max_file_chars=max_file_chars,
+                    included_paths=included_paths,
+                    sections=sections,
+                    evidence_files=evidence_files,
+                    truncated_sources=truncated_sources,
+                )
 
     diff_res = _run_git(repo_root, ["diff", "HEAD"])
     if diff_res and diff_res.returncode == 0 and diff_res.stdout.strip():
@@ -727,13 +756,15 @@ def collect_repo_evidence_bundle(
     max_file_chars: int = DEFAULT_MAX_FILE_CHARS,
     max_chars: int = DEFAULT_MAX_EVIDENCE_CHARS,
     auto_target_files: bool = True,
+    targets_only: bool = False,
 ) -> EvidenceBundle:
-    """Assemble spec, git/explicit/target files, auto images, and truncation telemetry."""
+    """Assemble spec, target/explicit/git files, auto images, and truncation telemetry."""
     sections: list[str] = []
     evidence_files: list[str] = []
     auto_images: list[Path] = []
     truncated_sources: list[str] = []
     warnings: list[str] = []
+    item_target_files: dict[str, set[str]] = {item.id: set() for item in items or []}
 
     repo_root_resolved = repo_root.resolve()
     spec_resolved = spec_path.resolve()
@@ -742,11 +773,12 @@ def collect_repo_evidence_bundle(
         if spec_resolved.is_relative_to(repo_root_resolved)
         else spec_path
     )
+    spec_label = str(spec_rel)
     spec_res = _read_text_with_truncation(spec_resolved, max_file_chars=max(max_file_chars, 48_000))
     spec_text = spec_res[0] if spec_res else ""
     if spec_res and spec_res[1]:
-        truncated_sources.append(str(spec_rel))
-    sections.append(f"## Specification ({spec_rel})\n\n{spec_text}")
+        truncated_sources.append(spec_label)
+    sections.append(f"## Specification ({spec_label})\n\n{spec_text}")
 
     included_paths: set[Path] = {spec_resolved}
 
@@ -771,6 +803,36 @@ def collect_repo_evidence_bundle(
             allow_outside_root=True,
         )
 
+    if auto_target_files and items:
+        for item in items:
+            for token in _extract_item_target_candidates(item):
+                candidate = _resolve_repo_relative_path(token, repo_root_resolved)
+                if candidate is None:
+                    continue
+                name = candidate.name
+                is_secret_env = (name == ".env" or name.startswith(".env.")) and (
+                    name not in _SAFE_DOTENV_NAMES
+                )
+                if is_secret_env or candidate.suffix.lower() == ".enc":
+                    continue
+                if candidate.suffix.lower() in _IMAGE_SUFFIXES:
+                    if candidate not in auto_images and len(auto_images) < MAX_AUTO_IMAGES:
+                        auto_images.append(candidate)
+                    continue
+                rel = str(candidate.relative_to(repo_root_resolved))
+                item_target_files.setdefault(item.id, set()).add(rel)
+                _add_evidence_file(
+                    path=candidate,
+                    label=rel,
+                    header="Target File",
+                    repo_root=repo_root_resolved,
+                    max_file_chars=max_file_chars,
+                    included_paths=included_paths,
+                    sections=sections,
+                    evidence_files=evidence_files,
+                    truncated_sources=truncated_sources,
+                )
+
     is_git_repo = _is_git_repo_root(repo_root_resolved)
     diff_added = False
 
@@ -790,6 +852,7 @@ def collect_repo_evidence_bundle(
             evidence_files=evidence_files,
             auto_images=auto_images,
             truncated_sources=truncated_sources,
+            include_file_bodies=not targets_only,
         )
     elif is_git_repo:
         diff_added = _collect_working_tree_git_evidence(
@@ -799,8 +862,9 @@ def collect_repo_evidence_bundle(
             sections=sections,
             evidence_files=evidence_files,
             truncated_sources=truncated_sources,
+            include_file_bodies=not targets_only,
         )
-    elif not explicit_files:
+    elif not explicit_files and not targets_only:
         for root_dir, dir_names, file_names in os.walk(repo_root_resolved):
             dir_names[:] = sorted(d for d in dir_names if d not in _SKIP_DIR_NAMES)
             for fname in sorted(file_names):
@@ -817,34 +881,6 @@ def collect_repo_evidence_bundle(
                     evidence_files=evidence_files,
                     truncated_sources=truncated_sources,
                 )
-
-    if auto_target_files and items:
-        for token in _extract_target_candidates(items):
-            candidate = _resolve_repo_relative_path(token, repo_root_resolved)
-            if candidate is None:
-                continue
-            name = candidate.name
-            is_secret_env = (name == ".env" or name.startswith(".env.")) and (
-                name not in _SAFE_DOTENV_NAMES
-            )
-            if is_secret_env or candidate.suffix.lower() == ".enc":
-                continue
-            if candidate.suffix.lower() in _IMAGE_SUFFIXES:
-                if candidate not in auto_images and len(auto_images) < MAX_AUTO_IMAGES:
-                    auto_images.append(candidate)
-                continue
-            rel = str(candidate.relative_to(repo_root_resolved))
-            _add_evidence_file(
-                path=candidate,
-                label=rel,
-                header="Target File",
-                repo_root=repo_root_resolved,
-                max_file_chars=max_file_chars,
-                included_paths=included_paths,
-                sections=sections,
-                evidence_files=evidence_files,
-                truncated_sources=truncated_sources,
-            )
 
     if is_git_repo and not evidence_files and not diff_added:
         warnings.append(
@@ -868,6 +904,8 @@ def collect_repo_evidence_bundle(
         evidence_chars=len(combined),
         truncated_sources=truncated_sources,
         warnings=warnings,
+        spec_label=spec_label,
+        item_target_files=item_target_files,
     )
 
 
@@ -980,6 +1018,28 @@ def _extract_noul_metrics(answer: Any) -> tuple[float, float]:
     return float(getattr(answer, "noul", 0.5)), float(getattr(answer, "confidence", 0.0))
 
 
+def _relevant_truncations_for_item(
+    item_id: str,
+    trunc_list: list[str],
+    item_target_files: dict[str, set[str]] | None,
+    spec_label: str | None,
+) -> list[str]:
+    """Return truncated evidence entries affecting `item_id`."""
+    if not trunc_list:
+        return []
+    if item_target_files is None:
+        return trunc_list
+    item_targets = item_target_files.get(item_id, set())
+    return [
+        src
+        for src in trunc_list
+        if src == "combined_evidence"
+        or (spec_label and src == spec_label)
+        or src.startswith("git diff")
+        or src in item_targets
+    ]
+
+
 def evaluate_answers(
     items: list[RubricItem],
     answers: dict[str, Any],
@@ -992,24 +1052,33 @@ def evaluate_answers(
     evidence_files: list[str] | None = None,
     evidence_chars: int = 0,
     warnings: list[str] | None = None,
+    item_target_files: dict[str, set[str]] | None = None,
+    spec_label: str | None = None,
 ) -> RubricEvaluation:
     """Apply tri-band routing, truncation safety guard, and mean `P(yes)` ratchet score."""
     verdicts: list[ItemVerdict] = []
     final_l2_arch_ids: list[str] = []
     fail_fast_ids: list[str] = []
     escalate_flash_ids: list[str] = []
+    escalate_arch_ids: list[str] = []
     trunc_list = list(truncated_sources or [])
     warn_list = list(warnings or [])
     downgraded_ids: list[str] = []
 
     for item in items:
         p_yes, confidence = _extract_noul_metrics(answers.get(item.id))
+        relevant_truncs = _relevant_truncations_for_item(
+            item.id,
+            trunc_list,
+            item_target_files,
+            spec_label,
+        )
         if p_yes >= pass_threshold and confidence >= min_confidence:
             if item.category == "arch":
                 status = "PROVISIONAL_ARCH_PASS"
-                l2_model = "flash"
+                l2_model = "inherit"
                 final_l2_arch_ids.append(item.id)
-            elif trunc_list and not allow_truncated_pass:
+            elif relevant_truncs and not allow_truncated_pass:
                 status = "ESCALATE_L2_FLASH"
                 l2_model = "flash"
                 escalate_flash_ids.append(item.id)
@@ -1021,6 +1090,10 @@ def evaluate_answers(
             status = "FAIL_FAST"
             l2_model = None
             fail_fast_ids.append(item.id)
+        elif item.category == "arch":
+            status = "ESCALATE_L2_ARCH"
+            l2_model = "inherit"
+            escalate_arch_ids.append(item.id)
         else:
             status = "ESCALATE_L2_FLASH"
             l2_model = "flash"
@@ -1042,11 +1115,11 @@ def evaluate_answers(
         warn_list.append(
             f"Downgraded mechanical PASS ({', '.join(downgraded_ids)}) to "
             f"ESCALATE_L2_FLASH because evidence was truncated "
-            f"({', '.join(trunc_list)}). Pass --allow-truncated-pass or shard via --only."
+            f"({', '.join(trunc_list)}). Pass --allow-truncated-pass or --only / --targets-only."
         )
 
     ratchet_score = sum(v.p_yes for v in verdicts) / len(verdicts) if verdicts else 1.0
-    has_blocking = bool(fail_fast_ids or escalate_flash_ids)
+    has_blocking = bool(fail_fast_ids or escalate_flash_ids or escalate_arch_ids)
 
     return RubricEvaluation(
         verdicts=verdicts,
@@ -1056,11 +1129,32 @@ def evaluate_answers(
         final_l2_arch_ids=final_l2_arch_ids,
         fail_fast_ids=fail_fast_ids,
         escalate_flash_ids=escalate_flash_ids,
+        escalate_arch_ids=escalate_arch_ids,
         evidence_files=list(evidence_files or []),
         evidence_chars=evidence_chars,
         truncated_sources=trunc_list,
         warnings=warn_list,
     )
+
+
+def _classify_decisions_api_error(exc: Exception) -> tuple[bool, bool]:
+    """Classify `(is_auth_error, is_quota_error)` from Gemini SDK or `_gaos` exceptions."""
+    err_lower = str(exc).lower()
+    status_code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+    is_auth = status_code in (401, 403) or any(
+        marker in err_lower for marker in ("401", "403", "api_key_invalid", "permission_denied")
+    )
+    is_quota = status_code == 429 or any(
+        marker in err_lower
+        for marker in (
+            "429",
+            "too_many_requests",
+            "resource_exhausted",
+            "spending cap",
+            "quota",
+        )
+    )
+    return is_auth, is_quota
 
 
 def call_decisions_api(
@@ -1086,14 +1180,23 @@ def call_decisions_api(
             questions=questions,  # type: ignore[arg-type]
         )
     except genai_errors.APIError as exc:
-        err_text = str(exc)
-        status_code = getattr(exc, "code", None)
-        is_auth = status_code in (401, 403) or any(
-            marker in err_text for marker in ("401", "403", "API_KEY_INVALID")
-        )
-        raise DecisionsApiError(err_text, is_auth_error=is_auth) from exc
+        is_auth, is_quota = _classify_decisions_api_error(exc)
+        raise DecisionsApiError(
+            str(exc),
+            is_auth_error=is_auth,
+            is_quota_error=is_quota,
+        ) from exc
     except (OSError, TimeoutError, ValueError) as exc:
         raise DecisionsApiError(str(exc)) from exc
+    except Exception as exc:
+        if type(exc).__module__.startswith("google.genai"):
+            is_auth, is_quota = _classify_decisions_api_error(exc)
+            raise DecisionsApiError(
+                str(exc),
+                is_auth_error=is_auth,
+                is_quota_error=is_quota,
+            ) from exc
+        raise
 
     latency_ms = round((time.perf_counter() - started) * 1000.0, 2)
     answers = getattr(response, "answers", None) or {}
@@ -1124,6 +1227,7 @@ def render_rich_report(evaluation: RubricEvaluation, spec_path: Path, model: str
         "PROVISIONAL_ARCH_PASS": "cyan",
         "FAIL_FAST": "bold red",
         "ESCALATE_L2_FLASH": "yellow",
+        "ESCALATE_L2_ARCH": "bold yellow",
     }
 
     for verdict in evaluation.verdicts:
@@ -1148,7 +1252,8 @@ def render_rich_report(evaluation: RubricEvaluation, spec_path: Path, model: str
         if evaluation.skipped_det_ids
         else ""
     )
-    escalate_ids = evaluation.escalate_flash_ids
+    escalate_flash_part = escape(str(evaluation.escalate_flash_ids or "none"))
+    escalate_arch_part = escape(str(evaluation.escalate_arch_ids or "none"))
     extra_lines: list[str] = []
     if evaluation.truncated_sources:
         extra_lines.append(f"Truncated: {escape(', '.join(evaluation.truncated_sources))}")
@@ -1161,7 +1266,8 @@ def render_rich_report(evaluation: RubricEvaluation, spec_path: Path, model: str
         f"Ratchet Mean P(yes): {evaluation.ratchet_score:.3f}"
         f"{latency_part}{tokens_part}{skipped_part}\n"
         f"Fail-Fast: {escape(str(evaluation.fail_fast_ids or 'none'))} | "
-        f"Escalate L2: {escape(str(escalate_ids or 'none'))} | "
+        f"Escalate L2 Flash: {escalate_flash_part} | "
+        f"Escalate L2 \\[arch]: {escalate_arch_part} | "
         f"Final L2 \\[arch] Sign-Off: {escape(str(evaluation.final_l2_arch_ids or 'none'))}"
         f"{extra_suffix}"
     )
@@ -1314,6 +1420,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Disable automatic loading of repo-relative files referenced in assertions.",
     )
     parser.add_argument(
+        "--targets-only",
+        action="store_true",
+        help="Include Git status/diff plus explicit and target files, skipping dirty-tree bodies.",
+    )
+    parser.add_argument(
         "--image-resolution",
         choices=("low", "medium", "high", "ultra_high"),
         default="medium",
@@ -1369,6 +1480,7 @@ def main(argv: list[str] | None = None) -> int:
             max_file_chars=args.max_file_chars,
             max_chars=args.max_evidence_chars,
             auto_target_files=not args.no_auto_target_files,
+            targets_only=args.targets_only,
         )
         merged_images = _merge_image_paths(args.images, bundle.auto_images, repo_root)
         decision_input, questions, evaluated_items, skipped_items = build_decision_payload(
@@ -1464,8 +1576,27 @@ def main(argv: list[str] | None = None) -> int:
             questions=questions,
         )
     except DecisionsApiError as exc:
+        if exc.is_fallback_error:
+            err_kind = "auth_error" if exc.is_auth_error else "quota_exceeded"
+            if args.json_output:
+                print(
+                    json.dumps(
+                        {
+                            "error": err_kind,
+                            "message": str(exc),
+                            "fallback_action": "Skip Tier 1.5 and proceed directly to Tier 2.",
+                        },
+                        indent=2,
+                    )
+                )
+            else:
+                _print_err(
+                    f"Tier 1.5 skipped ({err_kind}); proceeding to Tier 2: {exc}",
+                    style="bold yellow",
+                )
+            return 3
         _print_err(f"Decisions API call failed: {exc}")
-        return 3 if exc.is_auth_error else 1
+        return 1
 
     evaluation = evaluate_answers(
         items=evaluated_items,
@@ -1479,6 +1610,8 @@ def main(argv: list[str] | None = None) -> int:
         evidence_files=bundle.evidence_files,
         evidence_chars=bundle.evidence_chars,
         warnings=bundle.warnings,
+        item_target_files=bundle.item_target_files,
+        spec_label=bundle.spec_label,
     )
     evaluation.latency_ms = latency_ms
     evaluation.input_tokens = input_tokens
