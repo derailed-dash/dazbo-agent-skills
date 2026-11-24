@@ -166,7 +166,8 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `extra_context_files` | Comma-separated static files always attached to codebase context. | `''` |
 | `max_candidate_files` | Max candidate files considered during dynamic sparse context selection. | `'500'` |
 | `context_diff_directories_only` | Restrict dynamic context selection strictly to modified directories. | `'false'` |
-| `context_exclude_patterns` | Comma-separated glob patterns excluded from context selection. | `''` |
+| `context_exclude_patterns` | Comma-separated glob patterns (supporting recursive `**`) excluded from codebase background context. | `''` |
+| `diff_exclude_patterns` | Comma-separated glob patterns (supporting recursive `**`) excluded from PR diff and visual diff review. | `''` |
 | `max_multimodal_images` | Max multimodal images/visual diffs attached to review context. | `'20'` |
 | `max_triage_images` | Max remote screenshots attached during issue triage. | `'5'` |
 | `image_trigger_bytes` | Byte threshold above which raster images are downscaled (default 600 KB). | `'614400'` |
