@@ -219,7 +219,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6 # pin to a commit SHA in production repos
+        uses: actions/checkout@v7 # pin to a commit SHA in production repos
         with:
           # Automatically checks out the head ref for PR events,
           # and pulls the PR head branch for comment-based triggers
@@ -258,7 +258,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run Gemini Triage Action
         uses: derailed-dash/gemini-review-action@v1
