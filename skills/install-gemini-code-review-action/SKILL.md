@@ -7,6 +7,7 @@ metadata:
   repository: https://github.com/derailed-dash/dazbo-agent-skills
   cli:
     - gh
+    - gcloud # optional (only when provisioning Vertex AI WIF)
 ---
 
 # Installing & Upgrading Gemini PR Review & Issue Triage Action
@@ -49,7 +50,7 @@ Before writing or modifying any GitHub workflow files, inspect the `.github/work
 
 1. **Check for existing `gemini-review-action` workflows**:
    - Inspect `.github/workflows/gemini-review.yml` or `.github/workflows/gemini-triage.yml`.
-   - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-2.5-flash`, or `gemini-1.5-flash`), inform the user and **offer to upgrade the model to `gemini-4-hydrogen`**.
+   - Check the configured `gemini_model` parameter. If it uses an older model (e.g. `gemini-3.8-flash`, `gemini-3.6-flash`, or `gemini-3.5-flash`), inform the user and **offer to upgrade the model to `gemini-4-hydrogen`**.
    - Check if a `persona` input is specified. If missing or set to `straight`, **offer to add one of the custom reviewer personalities** (`dazbo`, `palpatine`, or `rick`).
    - Check if job-level `concurrency` is configured on the `review` job (prevents redundant billed calls on rapid bursts of commits).
    - Check if the `pull_request` trigger condition guards against external fork PRs (`github.event.pull_request.head.repo.full_name == github.repository`) so fork PRs don't fail due to missing repository secrets.
@@ -68,17 +69,26 @@ Ask the user:
    - **Both** (recommended)
 
 2. **Gemini Model**:
-   - **`gemini-4-hydrogen`** (Default & recommended — fast, cost-efficient Gemini 4 daily driver with 1M unified context, configurable `thinking_level` up to `xhigh`, native structured JSON output, multimodal visual diffing, and automatic 95% discount implicit context caching).
+   - **`gemini-4-hydrogen`** (Default & recommended — fast, cost-efficient Gemini 4 daily driver with 1M unified context, configurable `thinking_level` up to `xhigh`, native structured JSON output, and multimodal visual diffing).
+   - **Caching note**: Reliable cross-run **95% Durable Implicit Caching** on Gemini 4 (`0.05×` cached input rate, up to 24h) requires **Vertex AI on a multi-region endpoint (`eu` or `us`) via WIF/ADC**. Google AI Studio (`GEMINI_API_KEY`) and Vertex `global` provide best-effort ephemeral caching only and rely on prompt-volume controls (`context_mode`, `max_diff_full_file_bytes`, or opt-in `service_tier: 'flex'`). (Gemini 3 explicit `CachedContent` works on both AI Studio and Vertex AI.)
    - Offer model upgrade if an older model was detected in Step 1.
 
-3. **Reviewer Personality / Persona**:
+3. **Authentication Mode**:
+   - **Path A — Google AI Studio (`GEMINI_API_KEY`, default)**: Zero GCP setup and a single repository secret (`GEMINI_API_KEY`). If cost-sensitive, suggest `context_mode: 'sparse'` and/or `max_diff_full_file_bytes` since AI Studio does not guarantee cross-run Gemini 4 caching.
+   - **Path B — Vertex AI via Workload Identity Federation (`eu` or `us`)**: Keyless OIDC auth (no long-lived API keys or JSON key files), automatic Cloud Billing `billing_labels` attribution, and 24-hour Gemini 4 Durable Implicit Caching (`80%–95%` hits across runs). Ask whether the user already has an existing GCP WIF pool/provider/service account to reuse:
+     - If reusing an **owner-wide (Option A)** WIF pool (`attribute.repository_owner`), **zero `gcloud` commands** are needed for this repository — only collect `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER`, `GCP_SERVICE_ACCOUNT`, `WIF_POOL_ID`, `WIF_PROVIDER_ID`, and preferred multi-region location (`'eu'` or `'us'`).
+     - If reusing a **per-repo (Option B)** WIF pool (`attribute.repository`), add one `roles/iam.workloadIdentityUser` IAM binding for this repo (ask for explicit approval before running `gcloud`).
+     - If no WIF pool exists yet, follow [docs/vertex-ai-wif-setup.md](https://github.com/derailed-dash/gemini-review-action/blob/main/docs/vertex-ai-wif-setup.md) (and **always ask for explicit user approval before executing any `gcloud` commands**).
+     - Note that all repositories reusing the same WIF pool roll their Vertex AI token charges into that single GCP project while automatic `repo=<owner>_<repo>` Cloud Billing labels separate cost per repository.
+
+4. **Reviewer Personality / Persona**:
    Provide a clear summary of the available character personas to the user so they can choose their preferred tone:
    - **`straight`** (Default): Standard, professional, and direct technical code reviewer without character overlays.
    - **`dazbo`**: Practical, warm, and mildly cheeky software engineer personality. Uses approachable humour, avoids dry corporate boilerplate, and displays escalating dry sarcasm/humour if prior review recommendations are ignored without explanation in follow-up commits.
    - **`palpatine`**: Emperor Palpatine (Darth Sidious) from Star Wars. Ominous, imperial, dramatic, demanding absolute perfection (*"Do it."*, *"Good, good..."*, *"Unlimited power!"*, *"Execute Order 66 on this bug"*), with escalating imperial wrath for unaddressed flaws.
    - **`rick`**: Rick Sanchez from Rick and Morty. Hyper-intelligent, cynical multiverse genius (*"*burp*"*, *"Wubba Lubba Dub-Dub!"*, *"Jerry-level code"*). Demands galaxy-brain engineering perfection and treats sloppy bugs as pathetic Jerry-tier amateur work, with escalating multiverse exasperation if ignored.
 
-4. **Additional Customisation Options**:
+5. **Additional Customisation Options**:
    - **Preferred Language**: Default `English (UK)`. Options: `English (US)`, `French`, `Spanish`, etc.
    - **Path Inclusions / Exclusions**: Restrict triggers to specific files (e.g. `src/**` or excluding `docs/**`).
    - **Custom Review Guardrails (`.github/review-instruction-additions.md`)**: Offer to create `.github/review-instruction-additions.md` if the user wants to layer project-specific review rules or domain guardrails onto the default reviewer prompt without replacing the base TOML prompt.
@@ -97,6 +107,10 @@ Ensure the workflow specifies:
 - `persona: '<chosen_persona>'` (e.g. `straight`, `dazbo`, `palpatine`, or `rick`)
 - `language: '<chosen_language>'` (e.g. `English (UK)`)
 - Job-level `concurrency` group keyed on the PR number (`gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}`).
+- **If using Vertex AI via WIF (Path B)**:
+  - Add `id-token: write` to the job's `permissions:` block.
+  - Authenticate before the action step using SHA-pinned `google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0`.
+  - Pass `GOOGLE_GENAI_USE_VERTEXAI: 'True'`, `GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}`, and `GOOGLE_CLOUD_LOCATION: 'eu'` (or `'us'`) under `env:`, and **omit `gemini_api_key`**.
 
 > [!IMPORTANT]
 > **Action Input Parameters vs TOML Configuration**:
@@ -106,26 +120,37 @@ Ensure the workflow specifies:
 
 Check if the GitHub CLI (`gh`) is installed and authenticated by running `gh auth status`.
 
+#### Option A: Google AI Studio (`GEMINI_API_KEY`)
+
 **If `gh` is available and authenticated**:
 1. Ask the user for their Gemini API key (from Google AI Studio).
-2. Offer to set the GitHub repository secret automatically by running:
+2. Offer to set the GitHub repository secret automatically over stdin:
    ```bash
-   echo "<API_KEY>" | gh secret set GEMINI_API_KEY
+   printf '%s' "<API_KEY>" | gh secret set GEMINI_API_KEY
    ```
    > [!IMPORTANT]
-   > Do NOT pass the secret directly in shell command flags (e.g. `--body`) where it might be logged in terminal history. Use secure stdin redirection.
+   > Do NOT pass secrets directly in shell command flags (e.g. `--body`) where they might be logged in terminal history. Always use stdin redirection.
 
 **If `gh` is NOT available**:
-1. Provide manual instructions for GitHub Settings:
-   - Go to **Settings** > **Secrets and variables** > **Actions** -> **New repository secret**.
-   - Name: `GEMINI_API_KEY`.
-   - Value: The Gemini API key generated in Google AI Studio.
+- Go to **Settings** > **Secrets and variables** > **Actions** -> **New repository secret**.
+- Name: `GEMINI_API_KEY`, Value: the Gemini API key generated in Google AI Studio.
 
-> [!NOTE]
-> Alternative authentication via **Google Cloud Workload Identity Federation (WIF)** and **Application Default Credentials (ADC)** with Vertex AI is also supported (including Cloud Billing cost attribution labels via `billing_labels`).
+#### Option B: Vertex AI via WIF
 
-2. Share the link to the action repository: [derailed-dash/gemini-review-action](https://github.com/derailed-dash/gemini-review-action).
-3. Suggest starring the repository if they find the action useful.
+1. **GCP provisioning or reuse**:
+   - **First-time setup**: Follow [docs/vertex-ai-wif-setup.md](https://github.com/derailed-dash/gemini-review-action/blob/main/docs/vertex-ai-wif-setup.md) to enable APIs (`aiplatform.googleapis.com`, `iam.googleapis.com`, `iamcredentials.googleapis.com`, `sts.googleapis.com`), create the Workload Identity Pool/OIDC Provider locked to `assertion.repository_owner`, and bind `roles/aiplatform.user` + `roles/iam.workloadIdentityUser` (Option A owner-wide or Option B per-repo).
+   - **Reusing an existing Option A (owner-wide) pool**: Zero `gcloud` commands needed — skip directly to setting the 5 secrets below. (For Option B per-repo pools, bind `roles/iam.workloadIdentityUser` for the new repo first.)
+   - **All switched repos** bill Vertex AI usage to that shared GCP project, separated per repo via automatic `repo=<owner>_<repo>` Cloud Billing labels. Always ask for explicit user permission before running any `gcloud` commands.
+2. **Set the five GitHub repository secrets over stdin** (or create them manually under **Settings** > **Secrets and variables** > **Actions**):
+   ```bash
+   printf '%s' "<GCP_PROJECT_ID>" | gh secret set GCP_PROJECT_ID
+   printf '%s' "<GCP_PROJECT_NUMBER>" | gh secret set GCP_PROJECT_NUMBER
+   printf '%s' "<SA_NAME>@<GCP_PROJECT_ID>.iam.gserviceaccount.com" | gh secret set GCP_SERVICE_ACCOUNT
+   printf '%s' "<WIF_POOL_ID>" | gh secret set WIF_POOL_ID
+   printf '%s' "<WIF_PROVIDER_ID>" | gh secret set WIF_PROVIDER_ID
+   ```
+
+Share the link to the action repository and suggest starring it if they find it useful: [derailed-dash/gemini-review-action](https://github.com/derailed-dash/gemini-review-action).
 
 ### Step 5: Git commit and push changes
 
@@ -276,6 +301,109 @@ jobs:
           gemini_model: 'gemini-4-hydrogen'
           language: 'English (UK)'           # Optional (e.g. English (UK), French, Spanish)
           # timeout: '60'                     # Optional API timeout in seconds
+```
+
+### Vertex AI (WIF) PR Code Review Template (`.github/workflows/gemini-review.yml`)
+
+Use this variant when authenticating via Google Cloud Workload Identity Federation (unlocks 24-hour Gemini 4 Durable Implicit Caching on `eu`/`us` and Cloud Billing `billing_labels`):
+
+```yaml
+name: "🔎 Dazbo's Gemini Code Review"
+
+on:
+  pull_request:
+    branches:
+      - main
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/gemini-review') &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      )
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
+      checks: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7 # pin to a commit SHA in production repos
+        with:
+          ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
+
+      - name: Authenticate to Google Cloud via WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Run Gemini Review Action
+        uses: derailed-dash/gemini-review-action@v1 # or pin to a full commit SHA
+        env:
+          GOOGLE_GENAI_USE_VERTEXAI: 'True'
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_LOCATION: 'eu'        # Use 'eu' or 'us' for Gemini 4 Durable Implicit Caching
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          gemini_model: 'gemini-4-hydrogen'
+          language: 'English (UK)'           # Optional (e.g. English (UK), French, Spanish)
+          persona: 'straight'                # Optional: straight (default), dazbo, palpatine, rick
+```
+
+### Vertex AI (WIF) Issue Triage Template (`.github/workflows/gemini-triage.yml`)
+
+```yaml
+name: "🏷️ Dazbo's Gemini Issue Triage"
+
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Authenticate to Google Cloud via WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Run Gemini Triage Action
+        uses: derailed-dash/gemini-review-action@v1
+        env:
+          GOOGLE_GENAI_USE_VERTEXAI: 'True'
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_LOCATION: 'eu'
+        with:
+          command: 'triage'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          gemini_model: 'gemini-4-hydrogen'
+          language: 'English (UK)'
 ```
 
 ## Dynamic Template Fetching
