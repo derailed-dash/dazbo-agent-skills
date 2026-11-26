@@ -70,13 +70,13 @@ Ask the user:
 
 2. **Gemini Model**:
    - **`gemini-4-hydrogen`** (Default & recommended — fast, cost-efficient Gemini 4 daily driver with 1M unified context, configurable `thinking_level` up to `xhigh`, native structured JSON output, and multimodal visual diffing).
-   - **Caching note**: Reliable cross-run **95% Durable Implicit Caching** on Gemini 4 (`0.05×` cached input rate, up to 24h) requires **Vertex AI on a multi-region endpoint (`eu` or `us`) via WIF/ADC**. Google AI Studio (`GEMINI_API_KEY`) and Vertex `global` provide best-effort ephemeral caching only and rely on prompt-volume controls (`context_mode`, `max_diff_full_file_bytes`, or opt-in `service_tier: 'flex'`). (Gemini 3 explicit `CachedContent` works on both AI Studio and Vertex AI.)
+   - **Caching note**: Reliable cross-run **95% Durable Implicit Caching** on Gemini 4 (`0.05×` cached input rate, up to 24h) works via **Vertex AI WIF/ADC (`global` recommended to avoid `+10%` regional surcharges, or `'eu'`/`'us'` when data residency is required)** using the action's 3-turn `Content` prefix boundary (`User(base_sha repo + images) -> Model(ack) -> User(PR diff)`). *(Explicit Gemini 4 Cache Control with TTL launches 12 Jan 2027.)* Google AI Studio (`GEMINI_API_KEY`) provides best-effort ephemeral caching only and relies on prompt-volume controls (`context_mode`, `max_diff_full_file_bytes`, or opt-in `service_tier: 'flex'`). (Gemini 3 explicit `CachedContent` works on both AI Studio and Vertex AI.)
    - Offer model upgrade if an older model was detected in Step 1.
 
 3. **Authentication Mode**:
    - **Path A — Google AI Studio (`GEMINI_API_KEY`, default)**: Zero GCP setup and a single repository secret (`GEMINI_API_KEY`). If cost-sensitive, suggest `context_mode: 'sparse'` and/or `max_diff_full_file_bytes` since AI Studio does not guarantee cross-run Gemini 4 caching.
-   - **Path B — Vertex AI via Workload Identity Federation (`eu` or `us`)**: Keyless OIDC auth (no long-lived API keys or JSON key files), automatic Cloud Billing `billing_labels` attribution, and 24-hour Gemini 4 Durable Implicit Caching (`80%–95%` hits across runs). Ask whether the user already has an existing GCP WIF pool/provider/service account to reuse:
-     - If reusing an **owner-wide (Option A)** WIF pool (`attribute.repository_owner`), **zero `gcloud` commands** are needed for this repository — only collect `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER`, `GCP_SERVICE_ACCOUNT`, `WIF_POOL_ID`, `WIF_PROVIDER_ID`, and preferred multi-region location (`'eu'` or `'us'`).
+   - **Path B — Vertex AI via Workload Identity Federation (`global`, or `eu`/`us` for residency)**: Keyless OIDC auth (no long-lived API keys or JSON key files), automatic Cloud Billing `billing_labels` attribution, and 24-hour Gemini 4 Durable Implicit Caching (`~95%` hits across runs). Ask whether the user already has an existing GCP WIF pool/provider/service account to reuse:
+     - If reusing an **owner-wide (Option A)** WIF pool (`attribute.repository_owner`), **zero `gcloud` commands** are needed for this repository — only collect `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER`, `GCP_SERVICE_ACCOUNT`, `WIF_POOL_ID`, `WIF_PROVIDER_ID`, and preferred Vertex AI location (`'global'` recommended for standard pricing, or `'eu'`/`'us'` for regional residency).
      - If reusing a **per-repo (Option B)** WIF pool (`attribute.repository`), add one `roles/iam.workloadIdentityUser` IAM binding for this repo (ask for explicit approval before running `gcloud`).
      - If no WIF pool exists yet, follow [docs/vertex-ai-wif-setup.md](https://github.com/derailed-dash/gemini-review-action/blob/main/docs/vertex-ai-wif-setup.md) (and **always ask for explicit user approval before executing any `gcloud` commands**).
      - Note that all repositories reusing the same WIF pool roll their Vertex AI token charges into that single GCP project while automatic `repo=<owner>_<repo>` Cloud Billing labels separate cost per repository.
@@ -110,7 +110,7 @@ Ensure the workflow specifies:
 - **If using Vertex AI via WIF (Path B)**:
   - Add `id-token: write` to the job's `permissions:` block.
   - Pin both `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1` and `google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0` to full commit SHAs in jobs holding `id-token: write`.
-  - Pass `GOOGLE_GENAI_USE_VERTEXAI: 'True'`, `GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}`, and `GOOGLE_CLOUD_LOCATION: 'eu'` (or `'us'`) under `env:`, set `thinking_level: 'low'` on `gemini-triage.yml`, and **omit `gemini_api_key`**.
+  - Pass `GOOGLE_GENAI_USE_VERTEXAI: 'True'`, `GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}`, and `GOOGLE_CLOUD_LOCATION: 'global'` (or `'eu'`/`'us'` for regional data residency) under `env:`, set `thinking_level: 'low'` on `gemini-triage.yml`, and **omit `gemini_api_key`**.
 
 > [!IMPORTANT]
 > **Action Input Parameters vs TOML Configuration**:
@@ -308,7 +308,7 @@ jobs:
 
 ### Vertex AI (WIF) PR Code Review Template (`.github/workflows/gemini-review.yml`)
 
-Use this variant when authenticating via Google Cloud Workload Identity Federation (unlocks 24-hour Gemini 4 Durable Implicit Caching on `eu`/`us` and Cloud Billing `billing_labels`):
+Use this variant when authenticating via Google Cloud Workload Identity Federation (unlocks 24-hour Gemini 4 Durable Implicit Caching on `global` or `eu`/`us`, plus Cloud Billing `billing_labels`):
 
 ```yaml
 name: "🔎 Dazbo's Gemini Code Review"
@@ -361,7 +361,7 @@ jobs:
         env:
           GOOGLE_GENAI_USE_VERTEXAI: 'True'
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-          GOOGLE_CLOUD_LOCATION: 'eu'        # Use 'eu' or 'us' for Gemini 4 Durable Implicit Caching
+          GOOGLE_CLOUD_LOCATION: 'global'    # 'global' supports Durable Implicit Caching with standard pricing; use 'eu'/'us' for data residency
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           gemini_model: 'gemini-4-hydrogen'
@@ -401,7 +401,7 @@ jobs:
         env:
           GOOGLE_GENAI_USE_VERTEXAI: 'True'
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-          GOOGLE_CLOUD_LOCATION: 'eu'
+          GOOGLE_CLOUD_LOCATION: 'global'
         with:
           command: 'triage'
           github_token: ${{ secrets.GITHUB_TOKEN }}
