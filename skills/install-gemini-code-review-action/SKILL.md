@@ -109,8 +109,8 @@ Ensure the workflow specifies:
 - Job-level `concurrency` group keyed on the PR number (`gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}`).
 - **If using Vertex AI via WIF (Path B)**:
   - Add `id-token: write` to the job's `permissions:` block.
-  - Authenticate before the action step using SHA-pinned `google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0`.
-  - Pass `GOOGLE_GENAI_USE_VERTEXAI: 'True'`, `GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}`, and `GOOGLE_CLOUD_LOCATION: 'eu'` (or `'us'`) under `env:`, and **omit `gemini_api_key`**.
+  - Pin both `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1` and `google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0` to full commit SHAs in jobs holding `id-token: write`.
+  - Pass `GOOGLE_GENAI_USE_VERTEXAI: 'True'`, `GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}`, and `GOOGLE_CLOUD_LOCATION: 'eu'` (or `'us'`) under `env:`, set `thinking_level: 'low'` on `gemini-triage.yml`, and **omit `gemini_api_key`**.
 
 > [!IMPORTANT]
 > **Action Input Parameters vs TOML Configuration**:
@@ -343,7 +343,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7 # pin to a commit SHA in production repos
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
 
@@ -385,7 +385,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Authenticate to Google Cloud via WIF
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
@@ -403,6 +403,7 @@ jobs:
           command: 'triage'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           gemini_model: 'gemini-4-hydrogen'
+          thinking_level: 'low'
           language: 'English (UK)'
 ```
 
