@@ -155,7 +155,7 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `gemini_model` | Gemini model to use (recommended: `'gemini-4-hydrogen'`). | `'gemini-4-hydrogen'` |
 | `persona` | Reviewer persona overlay (`straight`, `dazbo`, `palpatine`, `rick`). | `'straight'` |
 | `language` | Natural language for review output (e.g. `English (UK)`, `French`). | `'English (UK)'` |
-| `timeout` | API request timeout in seconds (LLM review client enforces a 300s minimum HTTP timeout floor and falls back to streaming on connection resets). | `'60'` |
+| `timeout` | API request timeout in seconds (LLM review client enforces a 300s minimum HTTP timeout floor — raised to 600s for `service_tier: 'flex'` — and falls back to streaming on connection resets). | `'60'` |
 | `include_comment_history` | Fetch and track prior PR review threads and discussion comments. | `'true'` |
 | `skip_inline_suggestions` | Skip re-reviews on commits created by accepting inline GitHub suggestions. | `'true'` |
 | `resolve_addressed_threads` | Auto-resolve review threads marked addressed (requires PAT/App token). | `'false'` |
@@ -163,6 +163,12 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `custom_instructions` | Inline text or path to custom review guardrails markdown file. | `'.github/review-instruction-additions.md'` |
 | `thinking_level` | Optional reasoning level (`low`, `medium`, `high`, `xhigh` on `gemini-4-hydrogen`, `none`, or token budget on Gemini 3). | `''` |
 | `billing_labels` | Extra Cloud Billing `key=value` labels (Vertex AI / WIF only). | `''` |
+| `context_mode` | Codebase context strategy (`'auto'`, `'full'`, `'sparse'`, `'diff_only'`). | `'auto'` |
+| `max_context_bytes` | Repository text byte threshold before `'auto'` switches from Full to Sparse Mode (1.5 MB). | `'1536000'` |
+| `max_diff_full_file_bytes` | Aggregate byte ceiling across `Full Current File Content` blocks via water-fill capping (`'0'` omits full copies). | `'262144'` |
+| `attach_markdown_images` | Markdown-linked image attachment scope (`'all'`, `'core'`, `'diff'`, or `'none'`). | `'all'` |
+| `service_tier` | AI Studio inference tier (`'standard'` default, or `'flex'` for 50% off tokens with 1–15 min latency; ignored on Vertex AI). | `'standard'` |
+| `service_tier_fallback` | Automatically fall back to `'standard'` after bounded retries if Flex capacity sheds (`503`/`429`). | `'true'` |
 | `extra_context_files` | Comma-separated static files always attached to codebase context. | `''` |
 | `max_candidate_files` | Max candidate files considered during dynamic sparse context selection. | `'500'` |
 | `context_diff_directories_only` | Restrict dynamic context selection strictly to modified directories. | `'false'` |
