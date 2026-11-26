@@ -69,12 +69,12 @@ Always load the repository's rules and architectural intent before judging code:
 
 1. **Project Guidelines & Core Docs**:
    - Read `AGENTS.md`, `GEMINI.md`, or `CLAUDE.md` (at root or `.agents/`) to learn repository-specific conventions, coding standards, and architectural rules.
-   - Read `README.md`, `ARCHITECTURE.md`, `DESIGN.md`, `SPEC.md`, `TODO.md`, and package manifests (`pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`, etc.) where present.
+   - Read `README.md`, `ARCHITECTURE.md` / `docs/architecture.md`, `DESIGN.md` / `docs/DESIGN.md`, `SPEC.md` / `docs/SPEC.md`, `TODO.md`, and package manifests (`pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`, etc.) where present.
 2. **Custom Review Instructions**:
    - Check for optional repository-specific reviewer guardrails in `review-instruction-additions.md`, `.agents/review-instructions.md`, or `.github/review-instruction-additions.md`.
 3. **Domain Skills & Official Documentation**:
    - Check if any installed workspace or global agent skills apply to the technologies used in the project.
-   - If the code touches Google Cloud (Cloud Run, GKE, BigQuery, Cloud Logging, IAM), Firebase, Vertex AI, or Gemini SDKs, use the Google Developer Knowledge MCP tools (`search_documents`, `get_documents`) to verify current API best practices and model identifiers.
+   - If the code touches Google Cloud (Cloud Run, GKE, BigQuery, Cloud Logging, IAM), Firebase, Vertex AI, or Gemini SDKs, use the Google Developer Knowledge MCP tools (`search_documents`, `get_documents`) and Gemini API Docs MCP tools (`gemini_search_docs`, `gemini_get_doc`) to verify current API best practices and model identifiers. When checking SDK calls or enum parameters, also inspect the installed package types (e.g. in `.venv`) to catch silent enum warnings or schema mismatches.
 4. **Optional Tier 1.5 Rubric Pre-Screen (`tiered-rubric-loop`)**:
    - When `SPEC.md`, `docs/SPEC.md`, or `LOOPS.md` defines `B1`–`Bn` binary assertions and `tiered-rubric-loop` is installed, you can run `eval_rubric.py --json` (or `--base main --json` in **Mode A** branch reviews) first to clear routine mechanical checks in ~200 ms and focus deep review on `FAIL_FAST`, grey-zone, and `[arch]` assertions.
 
@@ -83,9 +83,9 @@ Always load the repository's rules and architectural intent before judging code:
 1. **Review Tests & Verification Coverage**:
    - Do tests exist for the critical behaviours and edge cases?
    - Do they test **actual behaviour** rather than mocking away implementation details?
-   - **Active Verification**: Run the test suite locally if fast and safe. For critical logic changes, check whether inverting a key condition causes a test failure; a condition that can be inverted while the test suite stays green reveals a missing test case.
+   - **Active Verification**: Run the test suite and static checks (`pyright`/`mypy`, `ruff`, `codespell`) locally if fast and safe. For critical logic changes, check whether inverting a key condition causes a test failure; a condition that can be inverted while the test suite stays green reveals a missing test case.
 2. **Holistic Documentation & Configuration Review**:
-   - Verify that `README.md`, `ARCHITECTURE.md`, `TODO.md`, CLI help text, and deployment/config files accurately reflect the implementation on disk. Flag documentation drift or stale instructions as concrete findings.
+   - Verify that `README.md`, `ARCHITECTURE.md` / `docs/architecture.md`, `SPEC.md` / `docs/SPEC.md`, `TODO.md`, CLI help text, and deployment/config files accurately reflect the implementation on disk. Flag documentation drift, stale instructions, or Mermaid/ASCII box diagrams in Markdown docs as concrete findings.
 3. **Multimodal & Visual Inspection**:
    - Inspect any added, modified, or Markdown-referenced image assets and architectural diagrams (`![...](path/to/diagram.png)`) using multimodal file viewing.
    - In **Mode A**, compare modified images against their baseline (`git show <base>:<path>`) to check for visual regressions.
@@ -107,7 +107,7 @@ When reviewing a changeset:
 3. **Read Full Current Files & Direct Neighbours**:
    - Read the **full current file content** of every modified file (not just the diff hunk) plus direct callers/imports so you understand surrounding control flow and line numbers.
 4. **Filter Noise**:
-   - Skip generated lockfiles (`uv.lock`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `cargo.lock`, `go.sum`), binaries, minified bundles (`*.min.js`), and encrypted secrets (`*.enc`, `.env`), except to confirm lockfile synchronisation when manifests change.
+   - Skip generated lockfiles (`uv.lock`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `cargo.lock`, `go.sum`), binaries, minified bundles (`*.min.js`), and encrypted secrets (`*.enc`, `.env`), except to confirm lockfile synchronisation when manifests change. Do not flag intentionally excluded vendored/generated paths or omitted lockfiles/binaries as missing from the diff.
 5. **Diff Scope Discipline**:
    - Focus inline findings on the changed lines and their direct blast radius (broken callers, missing tests, or doc drift caused by the diff).
 
@@ -129,7 +129,7 @@ When reviewing an entire codebase or specific directory without relying on Git d
      5. **Test Suite & Fixtures** (assessing coverage gaps, brittle mocks, and missing edge-case tests).
      6. **Documentation & Visual Diagrams** (`README.md`, `ARCHITECTURE.md`, `docs/*.md`, and embedded images).
 3. **Cross-Cutting Synthesis**:
-   - In Whole-Codebase Mode, evaluate systemic patterns across files—such as inconsistent error handling, duplicated logic across modules, circular dependencies, unreferenced dead code across the repo, security boundary gaps, and mismatches between `ARCHITECTURE.md` and the code.
+   - In Whole-Codebase Mode, evaluate systemic patterns across files—such as inconsistent error handling, duplicated logic across modules, circular dependencies, unreferenced dead code across the repo, security boundary gaps, and mismatches between `ARCHITECTURE.md` / `docs/architecture.md` and the code.
 
 ---
 
@@ -147,6 +147,7 @@ Evaluate systematically across five core engineering dimensions:
 1. **Correctness & Verification**:
    - Does the code accurately fulfil requirements and specifications?
    - Are edge cases (`None`/`null`, empty inputs, boundary conditions, network/API timeouts) and error paths handled cleanly?
+   - **Multi-stage fallback & error-classification cascades**: Verify retry/fallback stages are ordered by blast radius (e.g. stripping optional per-part fields before dropping active caches or multimodal attachments), exclude token-limit/auth/permission/quota errors from retry predicates, and handle dual-rejection paths (such as rejecting both an optional field and `thinking_config`).
    - Are there off-by-one errors, race conditions, resource leaks, or state inconsistencies?
    - Do tests validate actual behaviour rather than implementation details?
 2. **Readability & Simplicity**:
@@ -165,6 +166,7 @@ Evaluate systematically across five core engineering dimensions:
    - Is external input (CLI arguments, HTTP payloads, environment/config files, LLM outputs, remote URLs) treated as untrusted and validated/sanitised at system boundaries?
    - Are dynamic file paths protected against path traversal (e.g. `os.path.commonpath`)?
    - Are secrets excluded from source code, logs, command-line flags, and version control?
+   - **CI & GitHub Actions hardening**: Whenever a workflow job holds `id-token: write` (WIF/OIDC), verify third-party Actions are pinned to full commit SHAs, `pull_request` triggers guard against untrusted forks before accessing secrets/OIDC, and `concurrency` groups sit at **job level** rather than workflow level.
    - Are database queries parameterised and rendered outputs safely encoded?
 5. **Performance & Efficiency**:
    - Are there $O(N^2)$ lookups, N+1 queries, unbounded loops, or unconstrained memory/file reads in hot paths?
@@ -239,7 +241,7 @@ Actively identify orphaned code (both after refactors in Mode A and across modul
 3. **No Sweeping or Universal Claims**:
    - Never make universal assertions (e.g. *"all endpoints validate input"* or *"all dependencies are pinned"*) unless every single occurrence across the target scope has been verified. State precisely which files or functions were checked.
 4. **No Version or Model Downgrades**:
-   - Never suggest downgrading Gemini models (e.g. `gemini-3.8-flash` to `gemini-2.5-flash`), SDK versions, or language targets due to training cut-off dates. Treat newer version identifiers as valid.
+   - Never suggest downgrading GitHub Actions, dependencies, or Gemini models (e.g. `actions/checkout@v7` to `@v4`, or `gemini-4-hydrogen` to `gemini-3.5-flash`), SDK versions, or language targets due to training cut-off dates. Treat newer version identifiers as valid.
 5. **No Command Substitution in Suggested Shell Commands**:
    - Avoid `$(...)` or backticks in suggested shell commands to prevent unintended command execution and keep commands prefix-matchable.
 6. **Language & Spelling**:

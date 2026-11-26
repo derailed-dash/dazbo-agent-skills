@@ -203,6 +203,9 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `max_triage_images` | Max remote screenshots attached during issue triage. | `'5'` |
 | `image_trigger_bytes` | Byte threshold above which raster images are downscaled (default 600 KB). | `'614400'` |
 | `image_target_bytes` | Target byte size when downscaling large raster images (default 300 KB). | `'307200'` |
+| `context_media_resolution` | Per-part `media_resolution` for background Markdown images and PDFs (`'medium'` or `'high'`). | `'medium'` |
+| `visual_diff_media_resolution` | Per-part `media_resolution` for active PR visual diff images (`'high'` or `'medium'`). | `'high'` |
+| `triage_media_resolution` | Per-part `media_resolution` for issue triage screenshots (`'medium'` or `'high'`). | `'medium'` |
 
 ## Workflow Templates
 
