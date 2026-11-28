@@ -186,7 +186,9 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `resolve_addressed_threads` | Auto-resolve review threads marked addressed (requires PAT/App token). | `'false'` |
 | `exclude_comment_authors` | Comma-separated logins excluded from comment history (e.g. `claude[bot]`). | `''` |
 | `custom_instructions` | Inline text or path to custom review guardrails markdown file. | `'.github/review-instruction-additions.md'` |
-| `thinking_level` | Optional reasoning level (`low`, `medium`, `high`, `xhigh` on `gemini-4-hydrogen`, `none`, or token budget on Gemini 3). | `''` |
+| `thinking_level` | Optional reasoning level (`'auto'`, `low`, `medium`, `high`, `xhigh` on `gemini-4-hydrogen`, `none`, or token budget on Gemini 3). Blank or `'auto'` lets the pre-flight router choose dynamically. | `''` |
+| `enable_preflight_router` | Run the `gemini-decision-1` pre-flight router on Gemini Developer API to route `thinking_level`, inject matched skills into Turn 2, and gate Developer Knowledge tools (skipped cleanly on Vertex AI). | `'true'` |
+| `preflight_confidence_threshold` | Probability threshold in `(0.0, 1.0]` for pre-flight routing, skill injection, and confidence-safe upward fallback. | `'0.75'` |
 | `billing_labels` | Extra Cloud Billing `key=value` labels (Vertex AI / WIF only). | `''` |
 | `context_mode` | Codebase context strategy (`'auto'`, `'full'`, `'sparse'`, `'diff_only'`). | `'auto'` |
 | `max_context_bytes` | Repository text byte threshold before `'auto'` switches from Full to Sparse Mode (1.5 MB). | `'1536000'` |
@@ -206,6 +208,8 @@ The action supports four distinct reviewer personas configured via the `persona`
 | `context_media_resolution` | Per-part `media_resolution` for background Markdown images and PDFs (`'medium'` or `'high'`). | `'medium'` |
 | `visual_diff_media_resolution` | Per-part `media_resolution` for active PR visual diff images (`'high'` or `'medium'`). | `'high'` |
 | `triage_media_resolution` | Per-part `media_resolution` for issue triage screenshots (`'medium'` or `'high'`). | `'medium'` |
+| `triage_engine` | Issue triage classification engine (`'auto'`, `'decisions'`, or `'generate_content'`). | `'auto'` |
+| `triage_threshold` | Probability threshold in `(0.0, 1.0]` required to apply a label during Decisions triage. | `'0.70'` |
 
 ## Workflow Templates
 
